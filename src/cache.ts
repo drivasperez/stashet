@@ -14,7 +14,7 @@ export class Cache {
     this.id = id;
   }
 
-  addResource(key: string, initialValue: any) {
+  _addResource(key: string, initialValue: any) {
     if (this._cache.has(key))
       throw new Error(`Resource with key already exists: ${key}`);
 
@@ -22,11 +22,15 @@ export class Cache {
     this._liveResources.set(key, 0);
   }
 
-  getResource(key: string, onUpdate: (val: any) => void): any {
+  getResource(key: string, onUpdate: (val: any) => void) {
+    if (!this._cache.has(key)) {
+      this._addResource(key, null);
+    }
+
     const val = this._cache.get(key);
-    const rc = this._liveResources.get(key);
-    if (!val || rc == null)
-      throw new Error(`No resource exists with key: ${key}`);
+    if (!val) throw new Error('Resource unaccountably absent');
+
+    const rc = this._liveResources.get(key) ?? 0;
 
     this._liveResources.set(key, rc + 1);
     const subscription = val.subscribe(onUpdate);
@@ -39,9 +43,20 @@ export class Cache {
     };
   }
 
+  setResource(key: string, value: any) {
+    const resource = this._cache.get(key);
+    if (!resource) {
+      this._addResource(key, value);
+    } else {
+      resource.updateValue(value);
+    }
+  }
+
   dropResource(key: string) {
     const rc = this._liveResources.get(key);
-    if (rc == null)
+    if (!rc)
       throw new Error(`Attempted to drop resource that wasn't held: ${key}`);
+
+    this._liveResources.set(key, rc - 1);
   }
 }

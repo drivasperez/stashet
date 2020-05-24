@@ -1,9 +1,14 @@
+import React from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { useCachedResource } from '../src/useCachedResource';
+import { CacheContext } from '../src/cache-context';
+import { Cache } from '../src/cache';
 
-function flushPromises() {
-	return new Promise(resolve => setImmediate(resolve));
-}
+const wrapper = () => ({ children }: any) => (
+	<CacheContext.Provider value={new Cache('test')}>
+		{children}
+	</CacheContext.Provider>
+);
 
 describe('useCachedResource', () => {
 	it('should load data', async () => {
@@ -15,8 +20,9 @@ describe('useCachedResource', () => {
 				})
 		);
 
-		const { result, waitForNextUpdate } = renderHook(() =>
-			useCachedResource('blah', func)
+		const { result, waitForNextUpdate } = renderHook(
+			() => useCachedResource('blah', func),
+			{ wrapper: wrapper() }
 		);
 
 		expect(func).toHaveBeenCalledTimes(1);
@@ -41,8 +47,9 @@ describe('useCachedResource', () => {
 				})
 		);
 
-		const { result, waitForNextUpdate } = renderHook(() =>
-			useCachedResource('blah', func)
+		const { result, waitForNextUpdate } = renderHook(
+			() => useCachedResource('blah', func),
+			{ wrapper: wrapper() }
 		);
 
 		expect(func).toHaveBeenCalledTimes(1);
@@ -68,8 +75,9 @@ describe('useCachedResource', () => {
 				})
 		);
 
-		const { result, waitForNextUpdate } = renderHook(() =>
-			useCachedResource('blah', func, { msLongLoadAlert: 500 })
+		const { result, waitForNextUpdate } = renderHook(
+			() => useCachedResource('blah', func, { msLongLoadAlert: 500 }),
+			{ wrapper: wrapper() }
 		);
 
 		expect(func).toHaveBeenCalledTimes(1);

@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { Config } from './types';
+import { CacheContext } from './cache-context';
 import { Cache } from './cache';
-
-export const CacheContext = React.createContext<null | Cache>(null);
 
 type State<T> = {
   isLoading: boolean;
@@ -20,6 +19,7 @@ type Action<T> =
   | {
       type: 'long_load';
     }
+  | { type: 'initial_data'; payload: T }
   | {
       type: 'fetched_data';
       payload: T;
@@ -50,6 +50,8 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
         return { ...state, isLongLoad: true };
       }
       return { ...state };
+    case 'initial_data':
+      return { ...state, error: null, data: action.payload };
     case 'fetched_data':
       return {
         ...state,
@@ -95,9 +97,21 @@ export function useCachedResource<T>(
       'Usage of useCachedResource must have a CacheContext provider further up the tree'
     );
 
+  const [cacheRef] = React.useState(() =>
+    cache.getResource(key, payload => {
+      dispatch({ type: 'fetched_data', payload });
+    })
+  );
+
+  React.useEffect(() => {
+    return () => {
+      cacheRef.unsubscribe();
+    };
+  }, []);
+
   const [state, dispatch] = React.useReducer<R, T | undefined>(
     reducer,
-    undefined,
+    cacheRef.initialValue,
     createInitialState
   );
 
@@ -108,7 +122,10 @@ export function useCachedResource<T>(
     dispatch({ type: 'began_load' });
     asyncFunc().then(
       data => {
-        if (current) dispatch({ type: 'fetched_data', payload: data });
+        if (current) {
+          dispatch({ type: 'fetched_data', payload: data });
+          cache.setResource(key, data);
+        }
       },
       err => {
         if (current) dispatch({ type: 'fetch_error', payload: err });
@@ -118,7 +135,7 @@ export function useCachedResource<T>(
     return () => {
       current = false;
     };
-  }, [asyncFunc, skip]);
+  }, [asyncFunc, key, skip]);
 
   const { isLoading } = state;
   React.useEffect(() => {
