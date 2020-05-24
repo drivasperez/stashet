@@ -4,8 +4,8 @@ import { useCachedResource } from '../src/useCachedResource';
 import { CacheContext } from '../src/cache-context';
 import { Cache } from '../src/cache';
 
-const wrapper = () => ({ children }: any) => (
-  <CacheContext.Provider value={new Cache('test')}>
+const wrapper = (cache?: Cache) => ({ children }: any) => (
+  <CacheContext.Provider value={cache ?? new Cache('test')}>
     {children}
   </CacheContext.Provider>
 );
@@ -101,5 +101,46 @@ describe('useCachedResource', () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.isLongLoad).toBe(false);
     expect(result.current.data).toBe('Data');
+  });
+
+  it('should not fetch if skip is true', () => {
+    jest.useFakeTimers();
+    const func = jest.fn(
+      () =>
+        new Promise(res => {
+          setTimeout(() => res('Data'), 2000);
+        })
+    );
+
+    const { result, waitForNextUpdate } = renderHook(
+      () => useCachedResource('blah', func, { msLongLoadAlert: 500 }, true),
+      { wrapper: wrapper() }
+    );
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.data).toBe(null);
+    expect(result.current.isUpdating).toBe(false);
+  });
+
+  it('should immediately render a cached value', () => {
+    jest.useFakeTimers();
+    const func = jest.fn(
+      () =>
+        new Promise(res => {
+          setTimeout(() => res('Data'), 2000);
+        })
+    );
+
+    const cache = new Cache('test-cached');
+    cache._setResource('blah', 'EXISTING DATA');
+
+    const { result, waitForNextUpdate } = renderHook(
+      () => useCachedResource('blah', func, { msLongLoadAlert: 500 }),
+      { wrapper: wrapper(cache) }
+    );
+
+    expect(result.current.data).toBe('EXISTING DATA');
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.isUpdating).toBe(true);
   });
 });

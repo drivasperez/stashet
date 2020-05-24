@@ -27,13 +27,28 @@ type Action<T> =
       payload: any;
     };
 
-const createInitialState = <T>(initialData?: T): State<T> => ({
-  isLoading: !initialData,
-  isUpdating: !!initialData,
-  isLongLoad: false,
-  data: initialData ?? null,
-  error: null,
-});
+const createInitialState = <T>(config: {
+  initialData?: T;
+  skip?: boolean;
+}): State<T> => {
+  if (config.skip) {
+    return {
+      isLoading: false,
+      isUpdating: false,
+      isLongLoad: false,
+      data: null,
+      error: null,
+    };
+  }
+
+  return {
+    isLoading: !config.initialData,
+    isUpdating: !!config.initialData,
+    isLongLoad: false,
+    data: config.initialData ?? null,
+    error: null,
+  };
+};
 
 function reducer<T>(state: State<T>, action: Action<T>): State<T> {
   // console.log('state:', state, 'incoming action:', action);
@@ -105,11 +120,10 @@ export function useCachedResource<T>(
     };
   }, []);
 
-  const [state, dispatch] = React.useReducer<R, T | undefined>(
-    reducer,
-    cacheRef.initialValue,
-    createInitialState
-  );
+  const [state, dispatch] = React.useReducer<
+    R,
+    { initialData?: T; skip?: boolean }
+  >(reducer, { initialData: cacheRef.initialValue, skip }, createInitialState);
 
   React.useEffect(() => {
     let current = true;

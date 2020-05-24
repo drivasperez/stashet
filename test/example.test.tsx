@@ -1,5 +1,6 @@
+import React from 'react';
 import { render } from '@testing-library/react';
-import { App } from '../example';
+import { App } from '../example/components';
 
 describe('Example app', () => {
   jest.useFakeTimers();
