@@ -33,6 +33,8 @@
   },
   "name": "stashet",
   "author": "Daniel Rivas Perez",
+  "url": "https://github.com/drivasperez/stashet",
+  "repository": "drivasperez/stashet",
   "module": "dist/stashet.esm.js",
   "devDependencies": {
     "@testing-library/react": "^10.0.4",
