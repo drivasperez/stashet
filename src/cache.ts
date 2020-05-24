@@ -5,10 +5,18 @@ interface ValueStore<T> extends Subscribable<T>, Publishable<T> {}
 
 class Resource<T> extends Publisher<T> {}
 
+/**
+ * A basic cache. Holds values, and alerts subscribers to those
+ * values when another subscriber has changed a value they are watching.
+ *
+ */
 export class Cache {
   readonly id: string;
   private _cache: Map<string, ValueStore<any>> = new Map();
 
+  /**
+   * @param {string} id - Unique id for this cache
+   */
   constructor(id: string) {
     this.id = id;
   }
@@ -43,5 +51,12 @@ export class Cache {
 
   invalidateResource(key: string) {
     throw new Error('TODO');
+  }
+
+  mutateResource(key: string, value: any, invalidateResource: boolean = true) {
+    if (invalidateResource && this._cache.has(key))
+      this.invalidateResource(key);
+
+    this._setResource(key, value);
   }
 }
