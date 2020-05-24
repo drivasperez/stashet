@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { Config } from './types';
 import { CacheContext } from './cache-context';
-import { Cache } from './cache';
 
 type State<T> = {
   isLoading: boolean;
@@ -15,7 +14,6 @@ type Action<T> =
   | {
       type: 'began_load';
     }
-  | { type: 'began_update' }
   | {
       type: 'long_load';
     }
@@ -41,10 +39,8 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
   // console.log('state:', state, 'incoming action:', action);
   switch (action.type) {
     case 'began_load':
+      if (state.data) return { ...state, isLoading: false, isUpdating: true };
       return { ...state, isLoading: true, isUpdating: false };
-    case 'began_update': {
-      return { ...state, isUpdating: true, isLoading: false };
-    }
     case 'long_load':
       if (state.isLoading) {
         return { ...state, isLongLoad: true };
@@ -124,7 +120,7 @@ export function useCachedResource<T>(
       data => {
         if (current) {
           dispatch({ type: 'fetched_data', payload: data });
-          cache.setResource(key, data);
+          cache._setResource(key, data);
         }
       },
       err => {
