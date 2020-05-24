@@ -118,7 +118,7 @@ export function useCachedResource<T>(
     return () => {
       cacheRef.unsubscribe();
     };
-  }, []);
+  }, [cacheRef]);
 
   const [state, dispatch] = React.useReducer<
     R,
@@ -145,7 +145,7 @@ export function useCachedResource<T>(
     return () => {
       current = false;
     };
-  }, [asyncFunc, key, skip]);
+  }, [asyncFunc, cache, key, skip]);
 
   const { isLoading } = state;
   React.useEffect(() => {
