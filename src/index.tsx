@@ -1,1 +1,2 @@
-export { useCachedValue } from './useCachedValue';
+export { useCachedResource } from './useCachedResource';
+export { Cache } from './cache';

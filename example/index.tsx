@@ -1,7 +1,7 @@
 import 'react-app-polyfill/ie11';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
-import { useCachedValue } from '../.';
+import { useCachedResource } from '../.';
 
 function fetchAsync(ms: number) {
 	return new Promise((resolve, reject) => {
@@ -15,7 +15,9 @@ function fetchAsync(ms: number) {
 const fetch5s = fetchAsync.bind(null, 5000);
 
 const App = () => {
-	const stuff = useCachedValue('contacts', fetch5s, { msLongLoadAlert: 2000 });
+	const stuff = useCachedResource('contacts', fetch5s, {
+		msLongLoadAlert: 2000,
+	});
 	return (
 		<div>
 			<pre>{JSON.stringify(stuff, null, 2)}</pre>

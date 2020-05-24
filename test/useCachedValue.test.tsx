@@ -1,11 +1,11 @@
 import { renderHook, act } from '@testing-library/react-hooks';
-import { useCachedValue } from '../src/useCachedValue';
+import { useCachedResource } from '../src/useCachedResource';
 
 function flushPromises() {
 	return new Promise(resolve => setImmediate(resolve));
 }
 
-describe('useCachedValue', () => {
+describe('useCachedResource', () => {
 	it('should load data', async () => {
 		jest.useFakeTimers();
 		const func = jest.fn(
@@ -16,7 +16,7 @@ describe('useCachedValue', () => {
 		);
 
 		const { result, waitForNextUpdate } = renderHook(() =>
-			useCachedValue('blah', func)
+			useCachedResource('blah', func)
 		);
 
 		expect(func).toHaveBeenCalledTimes(1);
@@ -42,7 +42,7 @@ describe('useCachedValue', () => {
 		);
 
 		const { result, waitForNextUpdate } = renderHook(() =>
-			useCachedValue('blah', func)
+			useCachedResource('blah', func)
 		);
 
 		expect(func).toHaveBeenCalledTimes(1);
@@ -69,7 +69,7 @@ describe('useCachedValue', () => {
 		);
 
 		const { result, waitForNextUpdate } = renderHook(() =>
-			useCachedValue('blah', func, { msLongLoadAlert: 500 })
+			useCachedResource('blah', func, { msLongLoadAlert: 500 })
 		);
 
 		expect(func).toHaveBeenCalledTimes(1);
