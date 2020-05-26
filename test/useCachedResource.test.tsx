@@ -12,11 +12,16 @@ const wrapper = (cache?: Cache) => ({ children }: any) => (
 
 describe('useCachedResource', () => {
   it('should load data', async () => {
+    const data = {
+      cool: 33,
+      arr: [44, { hey: 'hi' }],
+      boo: { hi: { boo: { hi: 'boo' } } },
+    };
     jest.useFakeTimers();
     const func = jest.fn(
       () =>
         new Promise(res => {
-          setTimeout(() => res('Data'), 2000);
+          setTimeout(() => res(data), 2000);
         })
     );
 
@@ -35,7 +40,7 @@ describe('useCachedResource', () => {
     });
 
     expect(result.current.isLoading).toBe(false);
-    expect(result.current.data).toBe('Data');
+    expect(result.current.data).toBe(data);
   });
 
   it('should error out', async () => {
@@ -122,7 +127,7 @@ describe('useCachedResource', () => {
     expect(result.current.isUpdating).toBe(false);
   });
 
-  it('should immediately render a cached value', () => {
+  it('should immediately render a cached value if one exists', () => {
     jest.useFakeTimers();
     const func = jest.fn(
       () =>
@@ -143,4 +148,18 @@ describe('useCachedResource', () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.isUpdating).toBe(true);
   });
+
+  it.todo('should warn about long updates');
+
+  it.todo('should refetch after invalidation');
+
+  it.todo('should show updating when another subscriber is updating');
+
+  it.todo('should revalidate on window focus');
+
+  it.todo('should invalidate and refetch after a given cache age');
+
+  it.todo('should provide a nextPage callback for paged resources');
+
+  it.todo('should support refetching an entire paged list on invalidation');
 });
