@@ -14,7 +14,7 @@ export interface Publishable<T> {
   updateValue(value: T): void;
 }
 
-export type Config = {
+export type CacheConfig = {
   msLongLoadAlert?: number | false;
   msMinimumLoad?: number | false;
   ignoreCacheOnMount?: boolean;

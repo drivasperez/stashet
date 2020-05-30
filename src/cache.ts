@@ -1,9 +1,4 @@
-import { Subscribable, Publishable } from './types';
-import { Publisher } from './pubsub';
-
-interface ValueStore<T> extends Subscribable<T>, Publishable<T> {}
-
-class Resource<T> extends Publisher<T> {}
+import { Resource } from './resource';
 
 /**
  * A basic cache. Holds values, and alerts subscribers to those
@@ -12,7 +7,7 @@ class Resource<T> extends Publisher<T> {}
  */
 export class Cache {
   readonly id: string;
-  private _cache: Map<string, ValueStore<any>> = new Map();
+  private _cache: Map<string, Resource<any>> = new Map();
 
   /**
    * @param {string} id - Unique id for this cache

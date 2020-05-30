@@ -5,7 +5,7 @@ import {
   Subscription,
 } from './types';
 
-export class Publisher<T> implements Subscribable<T>, Publishable<T> {
+export class Resource<T> implements Subscribable<T>, Publishable<T> {
   private _currentValue: T;
   readonly id: string;
   private _latestSubscriber = 0;
