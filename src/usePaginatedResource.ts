@@ -87,7 +87,7 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
 export function usePaginatedResource<T>(
   key: string,
   asyncFunc: (prevData: T | null) => Promise<T>,
-  config: PaginatedCacheConfig<T> = {},
+  config: PaginatedCacheConfig<T>,
   skip?: boolean
 ) {
   const { msLongLoadAlert = false } = config;
