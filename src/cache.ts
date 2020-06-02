@@ -1,3 +1,4 @@
+import warning from 'tiny-warning';
 import { Resource } from './resource';
 import { OnUpdateFunction, OnInvalidatedFunction } from 'types';
 
@@ -52,10 +53,20 @@ export class Cache {
   invalidateResource(key: string | string[]) {
     if (Array.isArray(key)) {
       for (const k in key) {
-        this._cache.get(k)?.invalidateValue();
+        const res = this._cache.get(k);
+        warning(
+          res !== undefined,
+          `Tried to invalidate non-existent resource: ${k}`
+        );
+        if (res) res.invalidateValue();
       }
     } else {
-      this._cache.get(key)?.invalidateValue();
+      const res = this._cache.get(key);
+      warning(
+        res !== undefined,
+        `Tried to invalidate non-existent resource: ${key}`
+      );
+      if (res) res.invalidateValue();
     }
   }
 
