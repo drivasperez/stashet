@@ -117,7 +117,7 @@ describe('useResource', () => {
         })
     );
 
-    const { result, waitForNextUpdate } = renderHook(
+    const { result } = renderHook(
       () => useResource('blah', func, { msLongLoadAlert: 500 }, true),
       { wrapper: wrapper() }
     );
@@ -139,7 +139,7 @@ describe('useResource', () => {
     const cache = new Cache('test-cached');
     cache._setResource('blah', 'EXISTING DATA');
 
-    const { result, waitForNextUpdate } = renderHook(
+    const { result } = renderHook(
       () => useResource('blah', func, { msLongLoadAlert: 500 }),
       { wrapper: wrapper(cache) }
     );
