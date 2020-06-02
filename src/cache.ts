@@ -49,8 +49,14 @@ export class Cache {
     return subscription;
   }
 
-  invalidateResource(key: string) {
-    this._cache.get(key)?.invalidateValue();
+  invalidateResource(key: string | string[]) {
+    if (Array.isArray(key)) {
+      for (const k in key) {
+        this._cache.get(k)?.invalidateValue();
+      }
+    } else {
+      this._cache.get(key)?.invalidateValue();
+    }
   }
 
   mutateResource(key: string, value: any, invalidateResource: boolean = true) {
