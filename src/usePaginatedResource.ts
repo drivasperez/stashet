@@ -6,6 +6,7 @@ type State<T> = {
   isLoading: boolean;
   isUpdating: boolean;
   isLongLoad: boolean;
+  pageIsVisible: boolean;
   data: T | null;
   error: any | null;
 };
@@ -25,17 +26,20 @@ type Action<T> =
   | {
       type: 'fetch_error';
       payload: any;
-    };
+    }
+  | { type: 'document_focused'; payload: boolean };
 
 const createInitialState = <T>(config: {
   initialData?: T;
   skip?: boolean;
 }): State<T> => {
+  const pageIsVisible = !document?.hidden ?? true;
   if (config.skip) {
     return {
       isLoading: false,
       isUpdating: false,
       isLongLoad: false,
+      pageIsVisible,
       data: null,
       error: null,
     };
@@ -45,6 +49,7 @@ const createInitialState = <T>(config: {
     isLoading: !config.initialData,
     isUpdating: !!config.initialData,
     isLongLoad: false,
+    pageIsVisible,
     data: config.initialData ?? null,
     error: null,
   };
@@ -81,6 +86,8 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
         error: action.payload,
         data: null,
       };
+    case 'document_focused':
+      return { ...state, pageIsVisible: action.payload };
   }
 }
 
@@ -90,7 +97,7 @@ export function usePaginatedResource<T>(
   config: PaginatedCacheConfig<T>,
   skip?: boolean
 ) {
-  const { msLongLoadAlert = false } = config;
+  const { msLongLoadAlert = false, revalidateOnDocumentFocus = true } = config;
 
   type S = State<T>;
   type A = Action<T>;
@@ -150,6 +157,21 @@ export function usePaginatedResource<T>(
   React.useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  React.useEffect(() => {
+    const fetchOnFocus = () => {
+      dispatch({ type: 'document_focused', payload: !document.hidden });
+      if (revalidateOnDocumentFocus && !document.hidden) {
+        fetchData();
+      }
+    };
+
+    document.addEventListener('visibilitychange', fetchOnFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', fetchOnFocus);
+    };
+  }, [revalidateOnDocumentFocus, fetchData]);
 
   const { isLoading } = state;
   React.useEffect(() => {

@@ -21,15 +21,12 @@ export interface Publishable<T> {
 export type CacheConfig = {
   msLongLoadAlert?: number | false;
   msMinimumLoad?: number | false;
+  revalidateOnDocumentFocus?: boolean;
   ignoreCacheOnMount?: boolean;
   family?: string;
 };
 
-export type PaginatedCacheConfig<T> = {
-  msLongLoadAlert?: number | false;
-  msMinimumLoad?: number | false;
-  ignoreCacheOnMount?: boolean;
-  family?: string;
+export type PaginatedCacheConfig<T> = CacheConfig & {
   nextPageURISelector: (data: T) => string | undefined;
   extendPreviousData: (newData: T, oldData: T) => T;
 };
