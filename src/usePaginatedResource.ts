@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { PaginatedCacheConfig, Subscription } from './types';
-import { useCache } from 'useCache';
+import { useCache } from 'cache-context';
 
 type State<T> = {
   isLoading: boolean;
