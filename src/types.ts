@@ -24,3 +24,11 @@ export type CacheConfig = {
   ignoreCacheOnMount?: boolean;
   family?: string;
 };
+
+export type PaginatedCacheConfig<T> = {
+  msLongLoadAlert?: number | false;
+  msMinimumLoad?: number | false;
+  ignoreCacheOnMount?: boolean;
+  family?: string;
+  nextPageURISelector?: (data: T[]) => string | undefined;
+};

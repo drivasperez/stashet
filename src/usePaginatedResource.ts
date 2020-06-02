@@ -1,12 +1,12 @@
 import * as React from 'react';
-import { CacheConfig, Subscription } from './types';
+import { PaginatedCacheConfig, Subscription } from './types';
 import { CacheContext } from './cache-context';
 
 type State<T> = {
   isLoading: boolean;
   isUpdating: boolean;
   isLongLoad: boolean;
-  data: T | null;
+  data: T[] | null;
   error: any | null;
 };
 
@@ -17,10 +17,10 @@ type Action<T> =
   | {
       type: 'long_load';
     }
-  | { type: 'initial_data'; payload: T }
+  | { type: 'initial_data'; payload: T[] }
   | {
       type: 'fetched_data';
-      payload: T;
+      payload: T[];
     }
   | {
       type: 'fetch_error';
@@ -28,7 +28,7 @@ type Action<T> =
     };
 
 const createInitialState = <T>(config: {
-  initialData?: T;
+  initialData?: T[];
   skip?: boolean;
 }): State<T> => {
   if (config.skip) {
@@ -84,18 +84,13 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
   }
 }
 
-export function useCachedResource<T>(
+export function usePaginatedResource<T>(
   key: string,
-  asyncFunc: (prevData: T | null) => Promise<T>,
-  config: CacheConfig = {},
+  asyncFunc: (prevData: T[] | null) => Promise<T[]>,
+  config: PaginatedCacheConfig<T> = {},
   skip?: boolean
 ) {
-  const {
-    msLongLoadAlert = false,
-    msMinimumLoad = false,
-    ignoreCacheOnMount = false,
-    family,
-  } = config;
+  const { msLongLoadAlert = false } = config;
 
   type S = State<T>;
   type A = Action<T>;
@@ -119,7 +114,7 @@ export function useCachedResource<T>(
   );
 
   const isCurrent = React.useRef(0);
-  const prevData = React.useRef<T | null>(null);
+  const prevData = React.useRef<T[] | null>(null);
 
   React.useEffect(() => {
     return () => {
@@ -129,7 +124,7 @@ export function useCachedResource<T>(
 
   const [state, dispatch] = React.useReducer<
     R,
-    { initialData?: T; skip?: boolean }
+    { initialData?: T[]; skip?: boolean }
   >(reducer, { initialData: cacheRef.initialValue, skip }, createInitialState);
 
   const fetchData = React.useCallback(() => {
@@ -168,5 +163,33 @@ export function useCachedResource<T>(
     };
   }, [isLoading, msLongLoadAlert]);
 
-  return { ...state, refetch: fetchData };
+  let fetchNextPage = null;
+
+  if (
+    state.data &&
+    config.nextPageURISelector &&
+    config.nextPageURISelector(state.data)
+  ) {
+    fetchNextPage = () => {
+      isCurrent.current += 1;
+      const current = isCurrent.current;
+      dispatch({ type: 'began_load' });
+      asyncFunc(prevData.current).then(
+        data => {
+          if (current === isCurrent.current) {
+            const newData = [...state.data, ...data];
+            prevData.current = newData;
+            dispatch({ type: 'fetched_data', payload: data });
+            cache._setResource(key, data);
+          }
+        },
+        err => {
+          if (current === isCurrent.current)
+            dispatch({ type: 'fetch_error', payload: err });
+        }
+      );
+    };
+  }
+
+  return { ...state, refetch: fetchData, fetchNextPage };
 }
