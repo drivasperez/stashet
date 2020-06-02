@@ -30,5 +30,6 @@ export type PaginatedCacheConfig<T> = {
   msMinimumLoad?: number | false;
   ignoreCacheOnMount?: boolean;
   family?: string;
-  nextPageURISelector?: (data: T[]) => string | undefined;
+  nextPageURISelector?: (data: T) => string | undefined;
+  extendPreviousData?: (newData: T, oldData: T) => T;
 };

@@ -6,7 +6,7 @@ type State<T> = {
   isLoading: boolean;
   isUpdating: boolean;
   isLongLoad: boolean;
-  data: T[] | null;
+  data: T | null;
   error: any | null;
 };
 
@@ -17,10 +17,10 @@ type Action<T> =
   | {
       type: 'long_load';
     }
-  | { type: 'initial_data'; payload: T[] }
+  | { type: 'initial_data'; payload: T }
   | {
       type: 'fetched_data';
-      payload: T[];
+      payload: T;
     }
   | {
       type: 'fetch_error';
@@ -28,7 +28,7 @@ type Action<T> =
     };
 
 const createInitialState = <T>(config: {
-  initialData?: T[];
+  initialData?: T;
   skip?: boolean;
 }): State<T> => {
   if (config.skip) {
@@ -86,7 +86,7 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
 
 export function usePaginatedResource<T>(
   key: string,
-  asyncFunc: (prevData: T[] | null) => Promise<T[]>,
+  asyncFunc: (prevData: T | null) => Promise<T>,
   config: PaginatedCacheConfig<T> = {},
   skip?: boolean
 ) {
@@ -114,7 +114,7 @@ export function usePaginatedResource<T>(
   );
 
   const isCurrent = React.useRef(0);
-  const prevData = React.useRef<T[] | null>(null);
+  const prevData = React.useRef<T | null>(null);
 
   React.useEffect(() => {
     return () => {
@@ -124,7 +124,7 @@ export function usePaginatedResource<T>(
 
   const [state, dispatch] = React.useReducer<
     R,
-    { initialData?: T[]; skip?: boolean }
+    { initialData?: T; skip?: boolean }
   >(reducer, { initialData: cacheRef.initialValue, skip }, createInitialState);
 
   const fetchData = React.useCallback(() => {
@@ -177,7 +177,10 @@ export function usePaginatedResource<T>(
       asyncFunc(prevData.current).then(
         data => {
           if (current === isCurrent.current) {
-            const newData = state.data ? [...state.data, ...data] : data;
+            const newData =
+              prevData.current && config.extendPreviousData
+                ? config.extendPreviousData(data, prevData.current)
+                : data;
             prevData.current = newData;
             dispatch({ type: 'fetched_data', payload: data });
             cache._setResource(key, data);
