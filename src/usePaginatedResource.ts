@@ -177,7 +177,7 @@ export function usePaginatedResource<T>(
       asyncFunc(prevData.current).then(
         data => {
           if (current === isCurrent.current) {
-            const newData = [...state.data, ...data];
+            const newData = state.data ? [...state.data, ...data] : data;
             prevData.current = newData;
             dispatch({ type: 'fetched_data', payload: data });
             cache._setResource(key, data);
