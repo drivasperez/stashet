@@ -6,6 +6,7 @@ type State<T> = {
   isLoading: boolean;
   isUpdating: boolean;
   isLongLoad: boolean;
+  isLongUpdate: boolean;
   pageIsVisible: boolean;
   data: T | null;
   error: any | null;
@@ -39,6 +40,7 @@ const createInitialState = <T>(config: {
       isLoading: false,
       isUpdating: false,
       isLongLoad: false,
+      isLongUpdate: false,
       pageIsVisible,
       data: null,
       error: null,
@@ -49,6 +51,7 @@ const createInitialState = <T>(config: {
     isLoading: !config.initialData,
     isUpdating: !!config.initialData,
     isLongLoad: false,
+    isLongUpdate: false,
     pageIsVisible,
     data: config.initialData ?? null,
     error: null,
@@ -63,6 +66,8 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
     case 'long_load':
       if (state.isLoading) {
         return { ...state, isLongLoad: true };
+      } else if (state.isUpdating) {
+        return { ...state, isLongUpdate: true };
       }
       return { ...state };
     case 'initial_data':
@@ -72,6 +77,7 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
         ...state,
         isLoading: false,
         isLongLoad: false,
+        isLongUpdate: false,
         isUpdating: false,
         error: null,
         data: action.payload,
@@ -82,6 +88,7 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
         isLoading: false,
         isUpdating: false,
         isLongLoad: false,
+        isLongUpdate: false,
         error: action.payload,
         data: null,
       };
@@ -109,18 +116,30 @@ export function usePaginatedResource<T>(
       'Usage of useCachedResource must have a CacheContext provider further up the tree'
     );
 
+  const mounted = React.useRef(false);
+  const isCurrent = React.useRef(0);
+  const prevData = React.useRef<T | null>(null);
+
+  React.useEffect(() => {
+    mounted.current = true;
+
+    return () => {
+      mounted.current = false;
+    };
+  });
+
   const [cacheRef] = React.useState<Subscription<any>>(() =>
     cache.getResource(
       key,
       payload => {
-        dispatch({ type: 'fetched_data', payload });
+        if (mounted.current === true)
+          dispatch({ type: 'fetched_data', payload });
       },
-      () => fetchData()
+      () => {
+        if (mounted.current === true) fetchData();
+      }
     )
   );
-
-  const isCurrent = React.useRef(0);
-  const prevData = React.useRef<T | null>(null);
 
   React.useEffect(() => {
     return () => {
@@ -140,14 +159,14 @@ export function usePaginatedResource<T>(
     dispatch({ type: 'began_load' });
     asyncFunc(prevData.current).then(
       data => {
-        if (current === isCurrent.current) {
+        if (mounted.current === true && current === isCurrent.current) {
           prevData.current = data;
           dispatch({ type: 'fetched_data', payload: data });
           cache._setResource(key, data);
         }
       },
       err => {
-        if (current === isCurrent.current)
+        if (mounted.current === true && current === isCurrent.current)
           dispatch({ type: 'fetch_error', payload: err });
       }
     );
@@ -180,17 +199,18 @@ export function usePaginatedResource<T>(
     };
   }, [revalidateOnDocumentFocus, fetchData]);
 
-  const { isLoading } = state;
+  const { isLoading, isUpdating } = state;
   React.useEffect(() => {
     let t: NodeJS.Timeout;
-    if (isLoading && msLongLoadAlert !== false) {
+    const fetchingData = isLoading || isUpdating;
+    if (fetchingData && msLongLoadAlert !== false) {
       t = setTimeout(() => dispatch({ type: 'long_load' }), msLongLoadAlert);
     }
 
     return () => {
       if (t != null) clearTimeout(t);
     };
-  }, [isLoading, msLongLoadAlert]);
+  }, [isLoading, isUpdating, msLongLoadAlert]);
 
   let fetchNextPage = null;
 
@@ -205,7 +225,7 @@ export function usePaginatedResource<T>(
       dispatch({ type: 'began_load' });
       asyncFunc(prevData.current).then(
         data => {
-          if (current === isCurrent.current) {
+          if (mounted.current === true && current === isCurrent.current) {
             const newData =
               prevData.current && data && config.extendPreviousData
                 ? config.extendPreviousData(data, prevData.current)
@@ -216,7 +236,7 @@ export function usePaginatedResource<T>(
           }
         },
         err => {
-          if (current === isCurrent.current)
+          if (mounted.current === true && current === isCurrent.current)
             dispatch({ type: 'fetch_error', payload: err });
         }
       );
