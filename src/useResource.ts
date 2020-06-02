@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { CacheConfig, Subscription } from './types';
-import { CacheContext } from './cache-context';
+import { useCache } from './useCache';
 
 type State<T> = {
   isLoading: boolean;
@@ -90,23 +90,13 @@ export function useResource<T>(
   config: CacheConfig = {},
   skip?: boolean
 ) {
-  const {
-    msLongLoadAlert = false,
-    msMinimumLoad = false,
-    ignoreCacheOnMount = false,
-    family,
-  } = config;
+  const { msLongLoadAlert = false } = config;
 
   type S = State<T>;
   type A = Action<T>;
   type R = React.Reducer<S, A>;
 
-  const cache = React.useContext(CacheContext);
-
-  if (cache == null)
-    throw new Error(
-      'Usage of useCachedResource must have a CacheContext provider further up the tree'
-    );
+  const cache = useCache();
 
   const [cacheRef] = React.useState<Subscription<any>>(() =>
     cache.getResource(

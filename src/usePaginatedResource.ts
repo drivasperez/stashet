@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { PaginatedCacheConfig, Subscription } from './types';
-import { CacheContext } from './cache-context';
+import { useCache } from 'useCache';
 
 type State<T> = {
   isLoading: boolean;
@@ -96,7 +96,7 @@ export function usePaginatedResource<T>(
   type A = Action<T>;
   type R = React.Reducer<S, A>;
 
-  const cache = React.useContext(CacheContext);
+  const cache = useCache();
 
   if (cache == null)
     throw new Error(
