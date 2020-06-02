@@ -166,10 +166,18 @@ export function usePaginatedResource<T>(
       }
     };
 
+    const onUnfocus = () => {
+      dispatch({ type: 'document_focused', payload: false });
+    };
+
     document.addEventListener('visibilitychange', fetchOnFocus);
+    window.addEventListener('focus', fetchOnFocus);
+    window.addEventListener('blur', onUnfocus);
 
     return () => {
       document.removeEventListener('visibilitychange', fetchOnFocus);
+      window.removeEventListener('focus', fetchOnFocus);
+      window.removeEventListener('blur', onUnfocus);
     };
   }, [revalidateOnDocumentFocus, fetchData]);
 
