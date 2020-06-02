@@ -56,7 +56,6 @@ const createInitialState = <T>(config: {
 };
 
 function reducer<T>(state: State<T>, action: Action<T>): State<T> {
-  console.log('state:', state, 'incoming action:', action);
   switch (action.type) {
     case 'began_load':
       if (state.data) return { ...state, isLoading: false, isUpdating: true };
