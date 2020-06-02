@@ -84,7 +84,7 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
   }
 }
 
-export function useCachedResource<T>(
+export function useResource<T>(
   key: string,
   asyncFunc: (prevData: T | null) => Promise<T>,
   config: CacheConfig = {},

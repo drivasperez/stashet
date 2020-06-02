@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useCachedResource, Cache, CacheProvider } from '../.';
+import { useResource, Cache, CacheProvider } from '../.';
 
 import { BrowserRouter as Router, Link, Route, Routes } from 'react-router-dom';
 
@@ -62,7 +62,7 @@ const PageTwo = () => {
 
 const ResourceView = () => {
   const [newName, setNewName] = React.useState('');
-  const { isLoading, isLongLoad, data, isUpdating } = useCachedResource(
+  const { isLoading, isLongLoad, data, isUpdating } = useResource(
     'contacts',
     fetch5s,
     {

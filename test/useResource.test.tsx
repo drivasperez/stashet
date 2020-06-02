@@ -1,6 +1,6 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
-import { useCachedResource } from '../src/useCachedResource';
+import { useResource } from '../src/useResource';
 import { CacheContext } from '../src/cache-context';
 import { Cache } from '../src/cache';
 
@@ -10,7 +10,7 @@ const wrapper = (cache?: Cache) => ({ children }: any) => (
   </CacheContext.Provider>
 );
 
-describe('useCachedResource', () => {
+describe('useResource', () => {
   it('should load data', async () => {
     const data = {
       cool: 33,
@@ -26,7 +26,7 @@ describe('useCachedResource', () => {
     );
 
     const { result, waitForNextUpdate } = renderHook(
-      () => useCachedResource('blah', func),
+      () => useResource('blah', func),
       { wrapper: wrapper() }
     );
 
@@ -53,7 +53,7 @@ describe('useCachedResource', () => {
     );
 
     const { result, waitForNextUpdate } = renderHook(
-      () => useCachedResource('blah', func),
+      () => useResource('blah', func),
       { wrapper: wrapper() }
     );
 
@@ -81,7 +81,7 @@ describe('useCachedResource', () => {
     );
 
     const { result, waitForNextUpdate } = renderHook(
-      () => useCachedResource('blah', func, { msLongLoadAlert: 500 }),
+      () => useResource('blah', func, { msLongLoadAlert: 500 }),
       { wrapper: wrapper() }
     );
 
@@ -118,7 +118,7 @@ describe('useCachedResource', () => {
     );
 
     const { result, waitForNextUpdate } = renderHook(
-      () => useCachedResource('blah', func, { msLongLoadAlert: 500 }, true),
+      () => useResource('blah', func, { msLongLoadAlert: 500 }, true),
       { wrapper: wrapper() }
     );
 
@@ -140,7 +140,7 @@ describe('useCachedResource', () => {
     cache._setResource('blah', 'EXISTING DATA');
 
     const { result, waitForNextUpdate } = renderHook(
-      () => useCachedResource('blah', func, { msLongLoadAlert: 500 }),
+      () => useResource('blah', func, { msLongLoadAlert: 500 }),
       { wrapper: wrapper(cache) }
     );
 
