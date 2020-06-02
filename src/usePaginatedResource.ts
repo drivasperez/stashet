@@ -178,7 +178,7 @@ export function usePaginatedResource<T>(
         data => {
           if (current === isCurrent.current) {
             const newData =
-              prevData.current && config.extendPreviousData
+              prevData.current && data && config.extendPreviousData
                 ? config.extendPreviousData(data, prevData.current)
                 : data;
             prevData.current = newData;
