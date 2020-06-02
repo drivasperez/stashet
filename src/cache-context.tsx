@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { Cache } from './cache';
 
 export const CacheContext = React.createContext<null | Cache>(null);
