@@ -1,4 +1,5 @@
-export type UpdateFunction<T> = (v: T) => void;
+export type OnUpdateFunction<T> = (v: T) => void;
+export type OnInvalidatedFunction = () => void;
 export type Subscription<T> = {
   unsubscribe: () => void;
   initialValue: T;
@@ -6,7 +7,10 @@ export type Subscription<T> = {
 
 export interface Subscribable<T> {
   id: string;
-  subscribe(update: UpdateFunction<T>): Subscription<T>;
+  subscribe(
+    updated: OnUpdateFunction<T>,
+    invalidated: OnInvalidatedFunction
+  ): Subscription<T>;
 }
 
 export interface Publishable<T> {

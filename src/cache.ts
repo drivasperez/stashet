@@ -1,4 +1,5 @@
 import { Resource } from './resource';
+import { OnUpdateFunction, OnInvalidatedFunction } from 'types';
 
 /**
  * A basic cache. Holds values, and alerts subscribers to those
@@ -32,20 +33,24 @@ export class Cache {
     }
   }
 
-  getResource(key: string, onUpdate: (val: any) => void) {
+  getResource(
+    key: string,
+    onUpdate: OnUpdateFunction<any>,
+    onInvalidate: OnInvalidatedFunction
+  ) {
     if (!this._cache.has(key)) {
       this._addResource(key, null);
     }
 
     const val = this._cache.get(key);
-    if (!val) throw new Error('Resource unaccountably absent');
+    if (!val) throw new Error(`${this.id}: Resource unaccountably absent`);
 
-    const subscription = val.subscribe(onUpdate);
+    const subscription = val.subscribe(onUpdate, onInvalidate);
     return subscription;
   }
 
   invalidateResource(key: string) {
-    throw new Error('TODO');
+    this._cache.get(key)?.invalidateValue();
   }
 
   mutateResource(key: string, value: any, invalidateResource: boolean = true) {

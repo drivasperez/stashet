@@ -1,6 +1,4 @@
-import 'react-app-polyfill/ie11';
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
 import { useCachedResource, Cache, CacheProvider } from '../.';
 
 import { BrowserRouter as Router, Link, Route, Routes } from 'react-router-dom';
@@ -19,12 +17,12 @@ function fetchAsync(ms: number): Promise<Data> {
     randomNumber: Math.random(),
   };
 
-  return new Promise((resolve, reject) => {
+  return new Promise((resolve, _reject) => {
     setTimeout(() => resolve(data), ms);
   });
 }
 
-const fetch5s: () => Promise<Data> = fetchAsync.bind(null, 5000);
+const fetch5s: () => Promise<Data> = fetchAsync.bind(null, 3000);
 
 export const App = () => {
   return (
@@ -63,7 +61,8 @@ const PageTwo = () => {
 };
 
 const ResourceView = () => {
-  const { isLoading, data, error, isUpdating } = useCachedResource(
+  const [newName, setNewName] = React.useState('');
+  const { isLoading, isLongLoad, data, isUpdating } = useCachedResource(
     'contacts',
     fetch5s,
     {
@@ -86,6 +85,21 @@ const ResourceView = () => {
           <dd>{data.randomNumber}</dd>
         </dl>
         <div>{isUpdating && 'Updating data...'}</div>
+        <div>{isLongLoad && 'This is taking a while...'}</div>
+        <button onClick={() => cache.invalidateResource('contacts')}>
+          Invalidate cache
+        </button>
+        <input
+          value={newName}
+          onChange={e => setNewName(e.currentTarget.value)}
+        />
+        <button
+          onClick={() =>
+            cache.mutateResource('contacts', { ...data, userName: newName })
+          }
+        >
+          Change name locally
+        </button>
       </>
     );
 
