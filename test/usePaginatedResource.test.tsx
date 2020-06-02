@@ -169,7 +169,55 @@ describe('usePaginatedResource', () => {
     expect(result.current.isUpdating).toBe(true);
   });
 
-  it.todo('should warn about long updates');
+  it('should warn about long updates', async () => {
+    jest.useFakeTimers();
+    const func = jest.fn(
+      () =>
+        new Promise(res => {
+          setTimeout(() => res('Data'), 2000);
+        })
+    );
+
+    const cache = new Cache('longUpdates');
+    cache._setResource('blah', 'EXISTING DATA');
+
+    const { result, waitForNextUpdate } = renderHook(
+      () =>
+        usePaginatedResource('blah', func, {
+          ...defaultConfig,
+          msLongLoadAlert: 500,
+        }),
+      { wrapper: wrapper(cache) }
+    );
+
+    expect(func).toHaveBeenCalledTimes(1);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.isUpdating).toBe(true);
+    expect(result.current.isLongLoad).toBe(false);
+    expect(result.current.isLongUpdate).toBe(false);
+    expect(result.current.data).toBe('EXISTING DATA');
+
+    await act(async () => {
+      jest.advanceTimersByTime(700);
+      // await waitForNextUpdate();
+    });
+
+    expect(result.current.isLongLoad).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.isLongUpdate).toBe(true);
+    expect(result.current.isUpdating).toBe(true);
+
+    await act(async () => {
+      jest.runAllTimers();
+      await waitForNextUpdate();
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.isLongLoad).toBe(false);
+    expect(result.current.isLongUpdate).toBe(false);
+    expect(result.current.isUpdating).toBe(false);
+    expect(result.current.data).toBe('Data');
+  });
 
   it.todo('should refetch after invalidation');
 
