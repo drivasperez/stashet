@@ -11,9 +11,10 @@ const wrapper = (cache?: Cache) => ({ children }: any) => (
   </CacheContext.Provider>
 );
 
-const defaultConfig: UseInfiniteResourceConfig<any> = {
-  nextPageURISelector: data => data,
+const defaultConfig: UseInfiniteResourceConfig<any, any> = {
+  nextPageParams: () => [],
   extendPreviousData: (newData, oldData) => ({ ...oldData, ...newData }),
+  updateLoadedData: jest.fn(),
 };
 
 describe('useInfiniteResource', () => {

@@ -39,9 +39,16 @@ export type UseResourceConfig = {
   family?: string;
 };
 
-export type UseInfiniteResourceConfig<T, P> = UseResourceConfig & {
+export type UseInfiniteResourceConfig<
+  T,
+  P extends Array<any>
+> = UseResourceConfig & {
   nextPageParams: (data: T) => P;
-  extendPreviousData: (newData: T, oldData: T) => T;
+  extendPreviousData: (newData: T, oldData: T) => T | Promise<T>;
+  updateLoadedData: (
+    currentData: T,
+    asyncFunc: (...params: P) => Promise<T>
+  ) => Promise<T>;
 };
 
 export type Timeout = ReturnType<typeof setTimeout>;

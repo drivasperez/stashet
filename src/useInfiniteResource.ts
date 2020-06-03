@@ -171,6 +171,8 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
     )
   );
 
+  const prevData = React.useRef(cacheRef.initialValue);
+
   React.useEffect(() => {
     return () => {
       cacheRef.unsubscribe();
@@ -187,18 +189,36 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
     isCurrent.current += 1;
     const current = isCurrent.current;
     dispatch({ type: 'began_load' });
-    asyncFunc(...initialParams).then(
-      data => {
-        if (mounted.current === true && current === isCurrent.current) {
-          dispatch({ type: 'fetched_data', payload: data });
-          cache._setResource(key, data);
+
+    if (!prevData.current) {
+      asyncFunc(...initialParams).then(
+        data => {
+          if (mounted.current === true && current === isCurrent.current) {
+            dispatch({ type: 'fetched_data', payload: data });
+            prevData.current = data;
+            cache._setResource(key, data);
+          }
+        },
+        err => {
+          if (mounted.current === true && current === isCurrent.current)
+            dispatch({ type: 'fetch_error', payload: err });
         }
-      },
-      err => {
-        if (mounted.current === true && current === isCurrent.current)
-          dispatch({ type: 'fetch_error', payload: err });
-      }
-    );
+      );
+    } else {
+      config.updateLoadedData(prevData.current, asyncFunc).then(
+        data => {
+          if (mounted.current === true && current === isCurrent.current) {
+            dispatch({ type: 'fetched_data', payload: data });
+            prevData.current = data;
+            cache._setResource(key, data);
+          }
+        },
+        err => {
+          if (mounted.current === true && current === isCurrent.current)
+            dispatch({ type: 'fetch_error', payload: err });
+        }
+      );
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asyncFunc, cache, key, skip, ...initialParams]);
 
@@ -249,32 +269,28 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
     config.nextPageParams &&
     config.nextPageParams(state.data)
   ) {
-    fetchNextPage = () =>
-      new Promise(resolve => {
-        isCurrent.current += 1;
-        const current = isCurrent.current;
-        dispatch({ type: 'began_load', fetchingMore: true });
-        const nextParams: P = config.nextPageParams(state.data!); // we checked it's not null
-        asyncFunc(...nextParams).then(
-          data => {
-            if (
-              state.data !== null &&
-              mounted.current === true &&
-              current === isCurrent.current
-            ) {
-              const newData = config.extendPreviousData(data, state.data);
-              dispatch({ type: 'fetched_data', payload: newData });
-              cache._setResource(key, newData);
-            }
-            resolve();
-          },
-          err => {
-            if (mounted.current === true && current === isCurrent.current)
-              dispatch({ type: 'fetch_error', payload: err });
-            resolve();
-          }
-        );
-      });
+    fetchNextPage = async () => {
+      isCurrent.current += 1;
+      const current = isCurrent.current;
+      dispatch({ type: 'began_load', fetchingMore: true });
+      const nextParams: P = config.nextPageParams(state.data!); // we checked it's not null
+      try {
+        const data = await asyncFunc(...nextParams);
+
+        if (
+          state.data !== null &&
+          mounted.current === true &&
+          current === isCurrent.current
+        ) {
+          const newData = await config.extendPreviousData(data, state.data);
+          dispatch({ type: 'fetched_data', payload: newData });
+          cache._setResource(key, newData);
+        }
+      } catch (err) {
+        if (mounted.current === true && current === isCurrent.current)
+          dispatch({ type: 'fetch_error', payload: err });
+      }
+    };
   }
 
   return { ...state, refetch: fetchData, fetchNextPage };
