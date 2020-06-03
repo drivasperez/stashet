@@ -1,6 +1,10 @@
 import warning from 'tiny-warning';
 import { Resource } from './resource';
-import { OnUpdateFunction, OnInvalidatedFunction } from 'types';
+import {
+  OnUpdateCallback,
+  OnInvalidatedCallback,
+  OnEvictionCallback,
+} from 'types';
 
 /**
  * A basic cache. Holds values, and alerts subscribers to those
@@ -36,8 +40,9 @@ export class Cache {
 
   getResource(
     key: string,
-    onUpdate: OnUpdateFunction<any>,
-    onInvalidate: OnInvalidatedFunction
+    onUpdate: OnUpdateCallback<any>,
+    onInvalidate: OnInvalidatedCallback,
+    onEvicted: OnEvictionCallback
   ) {
     if (!this._cache.has(key)) {
       this._addResource(key, null);
@@ -46,7 +51,7 @@ export class Cache {
     const val = this._cache.get(key);
     if (!val) throw new Error(`${this.id}: Resource unaccountably absent`);
 
-    const subscription = val.subscribe(onUpdate, onInvalidate);
+    const subscription = val.subscribe(onUpdate, onInvalidate, onEvicted);
     return subscription;
   }
 

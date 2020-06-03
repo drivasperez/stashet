@@ -1,5 +1,13 @@
-export type OnUpdateFunction<T> = (v: T) => void;
-export type OnInvalidatedFunction = () => void;
+export type OnUpdateCallback<T> = (v: T) => void;
+export type OnInvalidatedCallback = () => void;
+export type OnEvictionCallback = () => void;
+
+export type SubscriberCallbacks<T> = {
+  updated: OnUpdateCallback<T>;
+  invalidated: OnInvalidatedCallback;
+  evicted: OnEvictionCallback;
+};
+
 export type Subscription<T> = {
   unsubscribe: () => void;
   initialValue: T;
@@ -8,8 +16,9 @@ export type Subscription<T> = {
 export interface Subscribable<T> {
   id: string;
   subscribe(
-    updated: OnUpdateFunction<T>,
-    invalidated: OnInvalidatedFunction
+    updated: OnUpdateCallback<T>,
+    invalidated: OnInvalidatedCallback,
+    evicted: OnEvictionCallback
   ): Subscription<T>;
 }
 

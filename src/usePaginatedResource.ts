@@ -28,7 +28,8 @@ type Action<T> =
       type: 'fetch_error';
       payload: any;
     }
-  | { type: 'document_focused'; payload: boolean };
+  | { type: 'document_focused'; payload: boolean }
+  | { type: 'key_evicted' };
 
 const createInitialState = <T>(config: {
   initialData?: T;
@@ -94,6 +95,8 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
       };
     case 'document_focused':
       return { ...state, pageIsVisible: action.payload };
+    case 'key_evicted':
+      return createInitialState({});
   }
 }
 
@@ -137,6 +140,9 @@ export function usePaginatedResource<T>(
       },
       () => {
         if (mounted.current === true) fetchData();
+      },
+      () => {
+        if (mounted.current === true) dispatch({ type: 'key_evicted' });
       }
     )
   );

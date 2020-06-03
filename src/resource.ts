@@ -1,19 +1,18 @@
 import {
   Subscribable,
   Publishable,
-  OnUpdateFunction,
-  OnInvalidatedFunction,
+  OnUpdateCallback,
+  OnInvalidatedCallback,
+  SubscriberCallbacks,
   Subscription,
+  OnEvictionCallback,
 } from './types';
 
 export class Resource<T> implements Subscribable<T>, Publishable<T> {
   private _currentValue: T;
   readonly id: string;
   private _latestSubscriber = 0;
-  private _subscribers: Map<
-    number,
-    { updated: OnUpdateFunction<T>; invalidated: OnInvalidatedFunction }
-  > = new Map();
+  private _subscribers: Map<number, SubscriberCallbacks<T>> = new Map();
 
   constructor(id: string, initialValue: T) {
     this._currentValue = initialValue;
@@ -34,10 +33,15 @@ export class Resource<T> implements Subscribable<T>, Publishable<T> {
   }
 
   subscribe(
-    updated: OnUpdateFunction<T>,
-    invalidated: OnInvalidatedFunction
+    updated: OnUpdateCallback<T>,
+    invalidated: OnInvalidatedCallback,
+    evicted: OnEvictionCallback
   ): Subscription<T> {
-    this._subscribers.set(this._latestSubscriber, { updated, invalidated });
+    this._subscribers.set(this._latestSubscriber, {
+      updated,
+      invalidated,
+      evicted,
+    });
     const subscription: Subscription<T> = {
       unsubscribe: () => this._unsubscribe(this._latestSubscriber),
       initialValue: this._currentValue,
