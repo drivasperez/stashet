@@ -249,28 +249,31 @@ export function useInfiniteResource<T>(
     config.nextPageURISelector &&
     config.nextPageURISelector(state.data)
   ) {
-    fetchNextPage = () => {
-      isCurrent.current += 1;
-      const current = isCurrent.current;
-      dispatch({ type: 'began_load', fetchingMore: true });
-      asyncFunc(prevData.current).then(
-        data => {
-          if (mounted.current === true && current === isCurrent.current) {
-            const newData =
-              prevData.current && data && config.extendPreviousData
-                ? config.extendPreviousData(data, prevData.current)
-                : data;
-            prevData.current = newData;
-            dispatch({ type: 'fetched_data', payload: data });
-            cache._setResource(key, data);
+    fetchNextPage = () =>
+      new Promise(resolve => {
+        isCurrent.current += 1;
+        const current = isCurrent.current;
+        dispatch({ type: 'began_load', fetchingMore: true });
+        asyncFunc(prevData.current).then(
+          data => {
+            if (mounted.current === true && current === isCurrent.current) {
+              const newData =
+                prevData.current && data && config.extendPreviousData
+                  ? config.extendPreviousData(data, prevData.current)
+                  : data;
+              prevData.current = newData;
+              dispatch({ type: 'fetched_data', payload: data });
+              cache._setResource(key, data);
+              resolve();
+            }
+          },
+          err => {
+            if (mounted.current === true && current === isCurrent.current)
+              dispatch({ type: 'fetch_error', payload: err });
+            resolve();
           }
-        },
-        err => {
-          if (mounted.current === true && current === isCurrent.current)
-            dispatch({ type: 'fetch_error', payload: err });
-        }
-      );
-    };
+        );
+      });
   }
 
   return { ...state, refetch: fetchData, fetchNextPage };
