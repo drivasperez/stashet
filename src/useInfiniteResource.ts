@@ -146,7 +146,6 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
 
   const mounted = React.useRef(false);
   const isCurrent = React.useRef(0);
-  const prevData = React.useRef<T | null>(null);
 
   React.useEffect(() => {
     mounted.current = true;
@@ -191,7 +190,6 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
     asyncFunc(...initialParams).then(
       data => {
         if (mounted.current === true && current === isCurrent.current) {
-          prevData.current = data;
           dispatch({ type: 'fetched_data', payload: data });
           cache._setResource(key, data);
         }
@@ -261,11 +259,10 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
           data => {
             if (mounted.current === true && current === isCurrent.current) {
               const newData =
-                prevData.current && data && config.extendPreviousData
-                  ? config.extendPreviousData(data, prevData.current)
+                state.data && data && config.extendPreviousData
+                  ? config.extendPreviousData(data, state.data)
                   : data;
-              prevData.current = newData;
-              dispatch({ type: 'fetched_data', payload: data });
+              dispatch({ type: 'fetched_data', payload: newData });
               cache._setResource(key, data);
               resolve();
             }
