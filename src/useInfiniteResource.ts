@@ -1,10 +1,10 @@
 import { useCreateResource } from './useCreateResource';
-import { UsePaginatedResourceConfig } from './types';
+import { UseInfiniteResourceConfig } from './types';
 
-export function usePaginatedResource<T>(
+export function useInfiniteResource<T>(
   key: string,
   asyncFunc: (prevData: T | null) => Promise<T>,
-  config: UsePaginatedResourceConfig<T>,
+  config: UseInfiniteResourceConfig<T>,
   skip?: boolean
 ) {
   const { msLongLoadAlert = false, revalidateOnDocumentFocus = true } = config;

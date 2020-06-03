@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
-import { usePaginatedResource } from '../src/usePaginatedResource';
-import { UsePaginatedResourceConfig } from '../src/types';
+import { useInfiniteResource } from '../src/useInfiniteResource';
+import { UseInfiniteResourceConfig } from '../src/types';
 import { CacheContext } from '../src/cache-context';
 import { Cache } from '../src/cache';
 
@@ -11,12 +11,12 @@ const wrapper = (cache?: Cache) => ({ children }: any) => (
   </CacheContext.Provider>
 );
 
-const defaultConfig: UsePaginatedResourceConfig<any> = {
+const defaultConfig: UseInfiniteResourceConfig<any> = {
   nextPageURISelector: data => data,
   extendPreviousData: (newData, oldData) => ({ ...oldData, ...newData }),
 };
 
-describe('usePaginatedResource', () => {
+describe('useInfiniteResource', () => {
   it('should load data', async () => {
     const data = {
       cool: 33,
@@ -32,7 +32,7 @@ describe('usePaginatedResource', () => {
     );
 
     const { result, waitForNextUpdate } = renderHook(
-      () => usePaginatedResource('blah', func, defaultConfig),
+      () => useInfiniteResource('blah', func, defaultConfig),
       { wrapper: wrapper() }
     );
 
@@ -59,7 +59,7 @@ describe('usePaginatedResource', () => {
     );
 
     const { result, waitForNextUpdate } = renderHook(
-      () => usePaginatedResource('blah', func, defaultConfig),
+      () => useInfiniteResource('blah', func, defaultConfig),
       { wrapper: wrapper() }
     );
 
@@ -88,7 +88,7 @@ describe('usePaginatedResource', () => {
 
     const { result, waitForNextUpdate } = renderHook(
       () =>
-        usePaginatedResource('blah', func, {
+        useInfiniteResource('blah', func, {
           ...defaultConfig,
           msLongLoadAlert: 500,
         }),
@@ -129,7 +129,7 @@ describe('usePaginatedResource', () => {
 
     const { result } = renderHook(
       () =>
-        usePaginatedResource(
+        useInfiniteResource(
           'blah',
           func,
           { ...defaultConfig, msLongLoadAlert: 500 },
@@ -157,7 +157,7 @@ describe('usePaginatedResource', () => {
 
     const { result } = renderHook(
       () =>
-        usePaginatedResource('blah', func, {
+        useInfiniteResource('blah', func, {
           ...defaultConfig,
           msLongLoadAlert: 500,
         }),
@@ -183,7 +183,7 @@ describe('usePaginatedResource', () => {
 
     const { result, waitForNextUpdate } = renderHook(
       () =>
-        usePaginatedResource('blah', func, {
+        useInfiniteResource('blah', func, {
           ...defaultConfig,
           msLongLoadAlert: 500,
         }),

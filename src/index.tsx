@@ -1,4 +1,4 @@
 export { useResource } from './useResource';
-export { usePaginatedResource } from './usePaginatedResource';
+export { useInfiniteResource } from './useInfiniteResource';
 export { CacheContext, CacheProvider, useCache } from './cache-context';
 export { Cache } from './cache';
