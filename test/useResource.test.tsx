@@ -83,7 +83,7 @@ describe('useResource', () => {
     );
 
     const { result, waitForNextUpdate } = renderHook(
-      () => useResource('blah', func, { msLongLoadAlert: 500 }),
+      () => useResource('blah', func, [], { msLongLoadAlert: 500 }),
       { wrapper: wrapper() }
     );
 
@@ -120,7 +120,7 @@ describe('useResource', () => {
     );
 
     const { result } = renderHook(
-      () => useResource('blah', func, { msLongLoadAlert: 500 }, true),
+      () => useResource('blah', func, [], { msLongLoadAlert: 500 }, true),
       { wrapper: wrapper() }
     );
 
@@ -142,7 +142,7 @@ describe('useResource', () => {
     cache._setResource('blah', 'EXISTING DATA');
 
     const { result } = renderHook(
-      () => useResource('blah', func, { msLongLoadAlert: 500 }),
+      () => useResource('blah', func, [], { msLongLoadAlert: 500 }),
       { wrapper: wrapper(cache) }
     );
 
@@ -165,7 +165,7 @@ describe('useResource', () => {
 
     const { result, waitForNextUpdate } = renderHook(
       () =>
-        useResource('blah', func, {
+        useResource('blah', func, [], {
           msLongLoadAlert: 500,
         }),
       { wrapper: wrapper(cache) }
@@ -198,6 +198,38 @@ describe('useResource', () => {
     expect(result.current.isLongUpdate).toBe(false);
     expect(result.current.isUpdating).toBe(false);
     expect(result.current.data).toBe('Data');
+  });
+
+  it('should work with parameters', async () => {
+    jest.useFakeTimers();
+    const func = jest.fn(
+      (num: number, str: string) =>
+        new Promise<{ num: number; str: string }>(res => {
+          setTimeout(() => res({ num, str }), 2000);
+        })
+    );
+
+    const { result, waitForNextUpdate } = renderHook(
+      () =>
+        useResource<{ num: number; str: string }>('blah', func, [
+          42,
+          'current',
+        ]),
+      { wrapper: wrapper() }
+    );
+
+    expect(func).toHaveBeenCalledTimes(1);
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.data).toBe(null);
+
+    await act(async () => {
+      jest.runAllTimers();
+      await waitForNextUpdate();
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.data!.num).toBe(42);
+    expect(result.current.data!.str).toBe('current');
   });
 
   it.todo('should refetch after invalidation');

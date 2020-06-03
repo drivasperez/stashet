@@ -100,9 +100,10 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
   }
 }
 
-export function useResource<T>(
+export function useResource<T, P extends Array<any> = any[]>(
   key: string,
-  asyncFunc: (prevData: T | null) => Promise<T>,
+  asyncFunc: (...params: P) => Promise<T>,
+  initialParams: P = ([] as unknown) as P,
   config: UseResourceConfig = {},
   skip?: boolean
 ) {
@@ -158,7 +159,7 @@ export function useResource<T>(
     isCurrent.current += 1;
     const current = isCurrent.current;
     dispatch({ type: 'began_load' });
-    asyncFunc(prevData.current).then(
+    asyncFunc(...initialParams).then(
       data => {
         if (mounted.current === true && current === isCurrent.current) {
           prevData.current = data;
@@ -171,7 +172,8 @@ export function useResource<T>(
           dispatch({ type: 'fetch_error', payload: err });
       }
     );
-  }, [asyncFunc, cache, key, skip]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asyncFunc, cache, key, skip, ...initialParams]);
 
   React.useEffect(() => {
     fetchData();

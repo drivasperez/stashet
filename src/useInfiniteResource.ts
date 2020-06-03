@@ -129,10 +129,11 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
   }
 }
 
-export function useInfiniteResource<T>(
+export function useInfiniteResource<T, P extends Array<any> = any[]>(
   key: string,
-  asyncFunc: (prevData: T | null) => Promise<T>,
-  config: UseInfiniteResourceConfig<T>,
+  asyncFunc: (...params: P) => Promise<T>,
+  initialParams: P = ([] as unknown) as P,
+  config: UseInfiniteResourceConfig<T, P>,
   skip?: boolean
 ) {
   const { msLongLoadAlert = false, revalidateOnDocumentFocus = true } = config;
@@ -187,7 +188,7 @@ export function useInfiniteResource<T>(
     isCurrent.current += 1;
     const current = isCurrent.current;
     dispatch({ type: 'began_load' });
-    asyncFunc(prevData.current).then(
+    asyncFunc(...initialParams).then(
       data => {
         if (mounted.current === true && current === isCurrent.current) {
           prevData.current = data;
@@ -200,7 +201,8 @@ export function useInfiniteResource<T>(
           dispatch({ type: 'fetch_error', payload: err });
       }
     );
-  }, [asyncFunc, cache, key, skip]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [asyncFunc, cache, key, skip, ...initialParams]);
 
   React.useEffect(() => {
     fetchData();
@@ -245,16 +247,17 @@ export function useInfiniteResource<T>(
   let fetchNextPage: null | (() => Promise<void>) = null;
 
   if (
-    state.data &&
-    config.nextPageURISelector &&
-    config.nextPageURISelector(state.data)
+    state.data !== null &&
+    config.nextPageParams &&
+    config.nextPageParams(state.data)
   ) {
     fetchNextPage = () =>
       new Promise(resolve => {
         isCurrent.current += 1;
         const current = isCurrent.current;
         dispatch({ type: 'began_load', fetchingMore: true });
-        asyncFunc(prevData.current).then(
+        const nextParams: P = config.nextPageParams(state.data!); // we checked it's not null
+        asyncFunc(...nextParams).then(
           data => {
             if (mounted.current === true && current === isCurrent.current) {
               const newData =

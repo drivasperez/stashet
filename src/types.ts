@@ -39,8 +39,8 @@ export type UseResourceConfig = {
   family?: string;
 };
 
-export type UseInfiniteResourceConfig<T> = UseResourceConfig & {
-  nextPageURISelector: (data: T) => string | undefined;
+export type UseInfiniteResourceConfig<T, P> = UseResourceConfig & {
+  nextPageParams: (data: T) => P;
   extendPreviousData: (newData: T, oldData: T) => T;
 };
 

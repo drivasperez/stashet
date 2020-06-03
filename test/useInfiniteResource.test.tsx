@@ -32,7 +32,7 @@ describe('useInfiniteResource', () => {
     );
 
     const { result, waitForNextUpdate } = renderHook(
-      () => useInfiniteResource('blah', func, defaultConfig),
+      () => useInfiniteResource('blah', func, [], defaultConfig),
       { wrapper: wrapper() }
     );
 
@@ -59,7 +59,7 @@ describe('useInfiniteResource', () => {
     );
 
     const { result, waitForNextUpdate } = renderHook(
-      () => useInfiniteResource('blah', func, defaultConfig),
+      () => useInfiniteResource('blah', func, [], defaultConfig),
       { wrapper: wrapper() }
     );
 
@@ -88,7 +88,7 @@ describe('useInfiniteResource', () => {
 
     const { result, waitForNextUpdate } = renderHook(
       () =>
-        useInfiniteResource('blah', func, {
+        useInfiniteResource('blah', func, [], {
           ...defaultConfig,
           msLongLoadAlert: 500,
         }),
@@ -132,6 +132,7 @@ describe('useInfiniteResource', () => {
         useInfiniteResource(
           'blah',
           func,
+          [],
           { ...defaultConfig, msLongLoadAlert: 500 },
           true
         ),
@@ -157,7 +158,7 @@ describe('useInfiniteResource', () => {
 
     const { result } = renderHook(
       () =>
-        useInfiniteResource('blah', func, {
+        useInfiniteResource('blah', func, [], {
           ...defaultConfig,
           msLongLoadAlert: 500,
         }),
@@ -183,7 +184,7 @@ describe('useInfiniteResource', () => {
 
     const { result, waitForNextUpdate } = renderHook(
       () =>
-        useInfiniteResource('blah', func, {
+        useInfiniteResource('blah', func, [], {
           ...defaultConfig,
           msLongLoadAlert: 500,
         }),
@@ -217,6 +218,40 @@ describe('useInfiniteResource', () => {
     expect(result.current.isLongUpdate).toBe(false);
     expect(result.current.isUpdating).toBe(false);
     expect(result.current.data).toBe('Data');
+  });
+
+  it('should work with parameters', async () => {
+    jest.useFakeTimers();
+    const func = jest.fn(
+      (num: number, str: string) =>
+        new Promise<{ num: number; str: string }>(res => {
+          setTimeout(() => res({ num, str }), 2000);
+        })
+    );
+
+    const { result, waitForNextUpdate } = renderHook(
+      () =>
+        useInfiniteResource<{ num: number; str: string }>(
+          'blah',
+          func,
+          [42, 'current'],
+          defaultConfig
+        ),
+      { wrapper: wrapper() }
+    );
+
+    expect(func).toHaveBeenCalledTimes(1);
+    expect(result.current.isLoading).toBe(true);
+    expect(result.current.data).toBe(null);
+
+    await act(async () => {
+      jest.runAllTimers();
+      await waitForNextUpdate();
+    });
+
+    expect(result.current.isLoading).toBe(false);
+    expect(result.current.data!.num).toBe(42);
+    expect(result.current.data!.str).toBe('current');
   });
 
   it.todo('should refetch after invalidation');
