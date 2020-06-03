@@ -264,7 +264,7 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
             ) {
               const newData = config.extendPreviousData(data, state.data);
               dispatch({ type: 'fetched_data', payload: newData });
-              cache._setResource(key, data);
+              cache._setResource(key, newData);
             }
             resolve();
           },
