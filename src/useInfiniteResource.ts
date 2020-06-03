@@ -205,7 +205,7 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
         }
       );
     } else {
-      config.updateLoadedData(prevData.current, asyncFunc).then(
+      config.updateLoadedData(prevData.current).then(
         data => {
           if (mounted.current === true && current === isCurrent.current) {
             dispatch({ type: 'fetched_data', payload: data });
@@ -284,6 +284,7 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
         ) {
           const newData = await config.extendPreviousData(data, state.data);
           dispatch({ type: 'fetched_data', payload: newData });
+          prevData.current = newData;
           cache._setResource(key, newData);
         }
       } catch (err) {

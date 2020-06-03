@@ -45,10 +45,7 @@ export type UseInfiniteResourceConfig<
 > = UseResourceConfig & {
   nextPageParams: (data: T) => P;
   extendPreviousData: (newData: T, oldData: T) => T | Promise<T>;
-  updateLoadedData: (
-    currentData: T,
-    asyncFunc: (...params: P) => Promise<T>
-  ) => Promise<T>;
+  updateLoadedData: (currentData: T) => Promise<T>;
 };
 
 export type Timeout = ReturnType<typeof setTimeout>;
