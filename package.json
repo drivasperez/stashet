@@ -15,7 +15,8 @@
     "build": "tsdx build",
     "test": "tsdx test --passWithNoTests",
     "lint": "tsdx lint",
-    "prepare": "tsdx build"
+    "prepare": "tsdx build",
+    "size": "yarn prepare && size-limit"
   },
   "peerDependencies": {
     "react": ">=16"
@@ -31,12 +32,19 @@
     "singleQuote": true,
     "trailingComma": "es5"
   },
+  "size-limit": [
+    {
+      "path": "dist/stashet.cjs.production.min.js",
+      "limit": "3 KB"
+    }
+  ],
   "name": "stashet",
   "author": "Daniel Rivas Perez",
   "url": "https://github.com/drivasperez/stashet",
   "repository": "drivasperez/stashet",
   "module": "dist/stashet.esm.js",
   "devDependencies": {
+    "@size-limit/preset-small-lib": "^4.5.0",
     "@testing-library/react": "^10.0.4",
     "@testing-library/react-hooks": "^3.2.1",
     "@types/react": "^16.9.35",
@@ -56,6 +64,7 @@
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-test-renderer": "^16.13.1",
+    "size-limit": "^4.5.0",
     "tsdx": "^0.13.2",
     "tslib": "^2.0.0",
     "typescript": "^3.9.3"
