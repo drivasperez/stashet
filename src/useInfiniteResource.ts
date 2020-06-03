@@ -7,6 +7,8 @@ type State<T> = {
   isUpdating: boolean;
   isLongLoad: boolean;
   isLongUpdate: boolean;
+  isFetchingMore: boolean;
+  isLongFetchingMore: boolean;
   pageIsVisible: boolean;
   data: T | null;
   error: any | null;
@@ -15,6 +17,7 @@ type State<T> = {
 type Action<T> =
   | {
       type: 'began_load';
+      fetchingMore?: boolean;
     }
   | {
       type: 'long_load';
@@ -42,6 +45,8 @@ const createInitialState = <T>(config: {
       isUpdating: false,
       isLongLoad: false,
       isLongUpdate: false,
+      isFetchingMore: false,
+      isLongFetchingMore: false,
       pageIsVisible,
       data: null,
       error: null,
@@ -53,6 +58,8 @@ const createInitialState = <T>(config: {
     isUpdating: !!config.initialData,
     isLongLoad: false,
     isLongUpdate: false,
+    isFetchingMore: false,
+    isLongFetchingMore: false,
     pageIsVisible,
     data: config.initialData ?? null,
     error: null,
@@ -62,13 +69,33 @@ const createInitialState = <T>(config: {
 function reducer<T>(state: State<T>, action: Action<T>): State<T> {
   switch (action.type) {
     case 'began_load':
-      if (state.data) return { ...state, isLoading: false, isUpdating: true };
-      return { ...state, isLoading: true, isUpdating: false };
+      if (action.fetchingMore === true)
+        return {
+          ...state,
+          isLoading: false,
+          isUpdating: false,
+          isFetchingMore: true,
+        };
+      if (state.data)
+        return {
+          ...state,
+          isLoading: false,
+          isUpdating: true,
+          isFetchingMore: false,
+        };
+      return {
+        ...state,
+        isLoading: true,
+        isUpdating: false,
+        isFetchingMore: false,
+      };
     case 'long_load':
       if (state.isLoading) {
         return { ...state, isLongLoad: true };
       } else if (state.isUpdating) {
         return { ...state, isLongUpdate: true };
+      } else if (state.isFetchingMore) {
+        return { ...state, isLongFetchingMore: true };
       }
       return { ...state };
     case 'initial_data':
@@ -79,6 +106,7 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
         isLoading: false,
         isLongLoad: false,
         isLongUpdate: false,
+        isLongFetchingMore: false,
         isUpdating: false,
         error: null,
         data: action.payload,
@@ -90,6 +118,7 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
         isUpdating: false,
         isLongLoad: false,
         isLongUpdate: false,
+        isLongFetchingMore: false,
         error: action.payload,
         data: null,
       };
@@ -113,11 +142,6 @@ export function useInfiniteResource<T>(
   type R = React.Reducer<S, A>;
 
   const cache = useCache();
-
-  if (cache == null)
-    throw new Error(
-      'Usage of useCachedResource must have a CacheContext provider further up the tree'
-    );
 
   const mounted = React.useRef(false);
   const isCurrent = React.useRef(0);
@@ -205,10 +229,10 @@ export function useInfiniteResource<T>(
     };
   }, [revalidateOnDocumentFocus, fetchData]);
 
-  const { isLoading, isUpdating } = state;
+  const { isLoading, isUpdating, isFetchingMore } = state;
   React.useEffect(() => {
     let t: NodeJS.Timeout;
-    const fetchingData = isLoading || isUpdating;
+    const fetchingData = isLoading || isUpdating || isFetchingMore;
     if (fetchingData && msLongLoadAlert !== false) {
       t = setTimeout(() => dispatch({ type: 'long_load' }), msLongLoadAlert);
     }
@@ -216,7 +240,7 @@ export function useInfiniteResource<T>(
     return () => {
       if (t != null) clearTimeout(t);
     };
-  }, [isLoading, isUpdating, msLongLoadAlert]);
+  }, [isLoading, isUpdating, isFetchingMore, msLongLoadAlert]);
 
   let fetchNextPage = null;
 
@@ -228,7 +252,7 @@ export function useInfiniteResource<T>(
     fetchNextPage = () => {
       isCurrent.current += 1;
       const current = isCurrent.current;
-      dispatch({ type: 'began_load' });
+      dispatch({ type: 'began_load', fetchingMore: true });
       asyncFunc(prevData.current).then(
         data => {
           if (mounted.current === true && current === isCurrent.current) {
