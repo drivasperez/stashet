@@ -257,15 +257,16 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
         const nextParams: P = config.nextPageParams(state.data!); // we checked it's not null
         asyncFunc(...nextParams).then(
           data => {
-            if (mounted.current === true && current === isCurrent.current) {
-              const newData =
-                state.data && data && config.extendPreviousData
-                  ? config.extendPreviousData(data, state.data)
-                  : data;
+            if (
+              state.data !== null &&
+              mounted.current === true &&
+              current === isCurrent.current
+            ) {
+              const newData = config.extendPreviousData(data, state.data);
               dispatch({ type: 'fetched_data', payload: newData });
               cache._setResource(key, data);
-              resolve();
             }
+            resolve();
           },
           err => {
             if (mounted.current === true && current === isCurrent.current)
