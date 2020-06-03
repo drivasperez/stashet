@@ -40,3 +40,7 @@ jobs:
         run: yarn build
         env:
           CI: true
+
+      - name: size-limit-action
+        uses: andresz1/size-limit-action@v1.3.1
+
