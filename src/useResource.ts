@@ -117,7 +117,6 @@ export function useResource<T, P extends Array<any> = any[]>(
 
   const mounted = React.useRef(false);
   const isCurrent = React.useRef(0);
-  const prevData = React.useRef<T | null>(null);
 
   React.useEffect(() => {
     mounted.current = true;
@@ -162,7 +161,6 @@ export function useResource<T, P extends Array<any> = any[]>(
     asyncFunc(...initialParams).then(
       data => {
         if (mounted.current === true && current === isCurrent.current) {
-          prevData.current = data;
           dispatch({ type: 'fetched_data', payload: data });
           cache._setResource(key, data);
         }
