@@ -39,7 +39,7 @@ export type UseResourceConfig = {
   family?: string;
 };
 
-export type UsePaginatedResourceConfig<T> = UseResourceConfig & {
+export type UseInfiniteResourceConfig<T> = UseResourceConfig & {
   nextPageURISelector: (data: T) => string | undefined;
   extendPreviousData: (newData: T, oldData: T) => T;
 };
