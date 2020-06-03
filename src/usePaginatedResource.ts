@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { PaginatedCacheConfig, Subscription } from './types';
+import { UsePaginatedResourceConfig, Subscription } from './types';
 import { useCache } from './cache-context';
 
 type State<T> = {
@@ -103,7 +103,7 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
 export function usePaginatedResource<T>(
   key: string,
   asyncFunc: (prevData: T | null) => Promise<T>,
-  config: PaginatedCacheConfig<T>,
+  config: UsePaginatedResourceConfig<T>,
   skip?: boolean
 ) {
   const { msLongLoadAlert = false, revalidateOnDocumentFocus = true } = config;

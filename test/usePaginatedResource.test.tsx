@@ -1,7 +1,7 @@
 import React from 'react';
 import { renderHook, act } from '@testing-library/react-hooks';
 import { usePaginatedResource } from '../src/usePaginatedResource';
-import { PaginatedCacheConfig } from '../src/types';
+import { UsePaginatedResourceConfig } from '../src/types';
 import { CacheContext } from '../src/cache-context';
 import { Cache } from '../src/cache';
 
@@ -11,7 +11,7 @@ const wrapper = (cache?: Cache) => ({ children }: any) => (
   </CacheContext.Provider>
 );
 
-const defaultConfig: PaginatedCacheConfig<any> = {
+const defaultConfig: UsePaginatedResourceConfig<any> = {
   nextPageURISelector: data => data,
   extendPreviousData: (newData, oldData) => ({ ...oldData, ...newData }),
 };

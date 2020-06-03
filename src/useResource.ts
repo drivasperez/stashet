@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { CacheConfig, Subscription } from './types';
+import { UseResourceConfig, Subscription } from './types';
 import { useCache } from './cache-context';
 
 type State<T> = {
@@ -103,7 +103,7 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
 export function useResource<T>(
   key: string,
   asyncFunc: (prevData: T | null) => Promise<T>,
-  config: CacheConfig = {},
+  config: UseResourceConfig = {},
   skip?: boolean
 ) {
   const { msLongLoadAlert = false, revalidateOnDocumentFocus = true } = config;

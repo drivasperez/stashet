@@ -4,7 +4,10 @@ import {
   OnUpdateCallback,
   OnInvalidatedCallback,
   OnEvictionCallback,
+  CacheConfig,
 } from 'types';
+
+const DEFAULT_MAX_RESOURCE_AGE = 240_000;
 
 /**
  * A basic cache. Holds values, and alerts subscribers to those
@@ -13,13 +16,30 @@ import {
  */
 export class Cache {
   readonly id: string;
-  private _cache: Map<string, Resource<any>> = new Map();
+  private readonly _cache: Map<string, Resource<any>> = new Map();
+  private readonly _msMaxResourceAge: number | false;
 
   /**
    * @param {string} id - Unique id for this cache
    */
-  constructor(id: string) {
+  constructor(id: string, config: CacheConfig = {}) {
+    const { msMaxResourceAge = DEFAULT_MAX_RESOURCE_AGE } = config;
     this.id = id;
+    this._msMaxResourceAge = msMaxResourceAge;
+  }
+
+  _startEvictionTimer(key: string) {
+    if (this._msMaxResourceAge === false) return;
+    const resource = this._cache.get(key);
+    if (resource !== undefined) {
+      if (resource.evictionTimeout !== null)
+        clearTimeout(resource.evictionTimeout);
+      const timeout = setTimeout(
+        () => this.evictResource(key),
+        this._msMaxResourceAge
+      );
+      resource.setEvictionTimeout(timeout);
+    }
   }
 
   _addResource(key: string, initialValue: any) {
@@ -36,15 +56,21 @@ export class Cache {
     } else {
       resource.updateValue(value);
     }
+    this._startEvictionTimer(key);
   }
 
   getResource(
     key: string,
     onUpdate: OnUpdateCallback<any>,
     onInvalidate: OnInvalidatedCallback,
-    onEvicted: OnEvictionCallback
+    onEvicted: OnEvictionCallback,
+    throwIfNotPresent = false
   ) {
     if (!this._cache.has(key)) {
+      if (throwIfNotPresent)
+        throw new Error(
+          `${this.id}: Attempted to access non-existent resource: ${key}`
+        );
       this._addResource(key, null);
     }
 
@@ -52,6 +78,7 @@ export class Cache {
     if (!val) throw new Error(`${this.id}: Resource unaccountably absent`);
 
     const subscription = val.subscribe(onUpdate, onInvalidate, onEvicted);
+    this._startEvictionTimer(key);
     return subscription;
   }
 
@@ -72,6 +99,32 @@ export class Cache {
         `Tried to invalidate non-existent resource: ${key}`
       );
       if (res) res.invalidateValue();
+    }
+  }
+
+  evictResource(key: string | string[]) {
+    if (Array.isArray(key)) {
+      for (const k in key) {
+        const res = this._cache.get(k);
+        warning(
+          res !== undefined,
+          `Tried to evict non-existent resource: ${k}`
+        );
+        if (res) {
+          res.announceEviction();
+          this._cache.delete(k);
+        }
+      }
+    } else {
+      const res = this._cache.get(key);
+      warning(
+        res !== undefined,
+        `Tried to evict non-existent resource: ${key}`
+      );
+      if (res) {
+        res.announceEviction();
+        this._cache.delete(key);
+      }
     }
   }
 

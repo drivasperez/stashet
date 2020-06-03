@@ -6,6 +6,7 @@ import {
   SubscriberCallbacks,
   Subscription,
   OnEvictionCallback,
+  Timeout,
 } from './types';
 
 export class Resource<T> implements Subscribable<T>, Publishable<T> {
@@ -13,10 +14,15 @@ export class Resource<T> implements Subscribable<T>, Publishable<T> {
   readonly id: string;
   private _latestSubscriber = 0;
   private _subscribers: Map<number, SubscriberCallbacks<T>> = new Map();
+  evictionTimeout: Timeout | null = null;
 
   constructor(id: string, initialValue: T) {
     this._currentValue = initialValue;
     this.id = id;
+  }
+
+  setEvictionTimeout(timeout: Timeout | null) {
+    this.evictionTimeout = timeout;
   }
 
   updateValue(value: T): void {
@@ -29,6 +35,12 @@ export class Resource<T> implements Subscribable<T>, Publishable<T> {
   invalidateValue(): void {
     for (const subscriber of this._subscribers.values()) {
       subscriber.invalidated();
+    }
+  }
+
+  announceEviction(): void {
+    for (const subscriber of this._subscribers.values()) {
+      subscriber.evicted();
     }
   }
 

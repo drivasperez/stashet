@@ -5,7 +5,9 @@ import { CacheContext } from '../src/cache-context';
 import { Cache } from '../src/cache';
 
 const wrapper = (cache?: Cache) => ({ children }: any) => (
-  <CacheContext.Provider value={cache ?? new Cache('test')}>
+  <CacheContext.Provider
+    value={cache ?? new Cache('test', { msMaxResourceAge: false })}
+  >
     {children}
   </CacheContext.Provider>
 );
