@@ -242,7 +242,7 @@ export function useInfiniteResource<T>(
     };
   }, [isLoading, isUpdating, isFetchingMore, msLongLoadAlert]);
 
-  let fetchNextPage = null;
+  let fetchNextPage: null | (() => Promise<void>) = null;
 
   if (
     state.data &&
