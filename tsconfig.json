@@ -12,7 +12,6 @@
     "noUnusedParameters": false,
     "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true,
-    "downlevelIteration": true,
     "moduleResolution": "node",
     "baseUrl": "./",
     "paths": {
