@@ -11,10 +11,7 @@ export const CacheProvider: React.FC<{ cache: Cache }> = ({
 export function useCache() {
   const cache = React.useContext(CacheContext);
 
-  if (cache == null)
-    throw new Error(
-      'Use of cache must have a CacheContext provider further up the tree'
-    );
+  if (cache == null) throw new Error('Use this hook with CacheProvider');
 
   return cache;
 }

@@ -16,23 +16,23 @@ type State<T> = {
 
 type Action<T> =
   | {
-      type: 'began_load';
-      fetchingMore?: boolean;
+      type: 'began';
+      more?: boolean;
     }
   | {
       type: 'long_load';
     }
-  | { type: 'initial_data'; payload: T }
+  | { type: 'init'; p: T }
   | {
-      type: 'fetched_data';
-      payload: T;
+      type: 'fetched';
+      p: T;
     }
   | {
-      type: 'fetch_error';
-      payload: any;
+      type: 'err';
+      p: any;
     }
-  | { type: 'document_focused'; payload: boolean }
-  | { type: 'key_evicted' };
+  | { type: 'focus'; p: boolean }
+  | { type: 'evict' };
 
 const createInitialState = <T>(config: {
   initialData?: T;
@@ -68,8 +68,8 @@ const createInitialState = <T>(config: {
 
 function reducer<T>(state: State<T>, action: Action<T>): State<T> {
   switch (action.type) {
-    case 'began_load':
-      if (action.fetchingMore === true)
+    case 'began':
+      if (action.more === true)
         return {
           ...state,
           isLoading: false,
@@ -98,9 +98,9 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
         return { ...state, isLongFetchingMore: true };
       }
       return { ...state };
-    case 'initial_data':
-      return { ...state, error: null, data: action.payload };
-    case 'fetched_data':
+    case 'init':
+      return { ...state, error: null, data: action.p };
+    case 'fetched':
       return {
         ...state,
         isLoading: false,
@@ -109,9 +109,9 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
         isLongFetchingMore: false,
         isUpdating: false,
         error: null,
-        data: action.payload,
+        data: action.p,
       };
-    case 'fetch_error':
+    case 'err':
       return {
         ...state,
         isLoading: false,
@@ -119,12 +119,12 @@ function reducer<T>(state: State<T>, action: Action<T>): State<T> {
         isLongLoad: false,
         isLongUpdate: false,
         isLongFetchingMore: false,
-        error: action.payload,
+        error: action.p,
         data: null,
       };
-    case 'document_focused':
-      return { ...state, pageIsVisible: action.payload };
-    case 'key_evicted':
+    case 'focus':
+      return { ...state, pageIsVisible: action.p };
+    case 'evict':
       return createInitialState({});
   }
 }
@@ -161,15 +161,14 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
   const [cacheRef] = React.useState<Subscription<any>>(() =>
     cache.getResource(
       key,
-      payload => {
-        if (mounted.current === true)
-          dispatch({ type: 'fetched_data', payload });
+      p => {
+        if (mounted.current === true) dispatch({ type: 'fetched', p });
       },
       () => {
         if (mounted.current === true) fetchData();
       },
       () => {
-        if (mounted.current === true) dispatch({ type: 'key_evicted' });
+        if (mounted.current === true) dispatch({ type: 'evict' });
       }
     )
   );
@@ -191,34 +190,34 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
     if (skip) return;
     isCurrent.current += 1;
     const current = isCurrent.current;
-    dispatch({ type: 'began_load' });
+    dispatch({ type: 'began' });
 
     if (!prevData.current) {
       asyncFunc(...initialParams).then(
         data => {
           if (mounted.current === true && current === isCurrent.current) {
-            dispatch({ type: 'fetched_data', payload: data });
+            dispatch({ type: 'fetched', p: data });
             prevData.current = data;
             cache._setResource(key, data);
           }
         },
         err => {
           if (mounted.current === true && current === isCurrent.current)
-            dispatch({ type: 'fetch_error', payload: err });
+            dispatch({ type: 'err', p: err });
         }
       );
     } else {
       config.updateLoadedData(prevData.current).then(
         data => {
           if (mounted.current === true && current === isCurrent.current) {
-            dispatch({ type: 'fetched_data', payload: data });
+            dispatch({ type: 'fetched', p: data });
             prevData.current = data;
             cache._setResource(key, data);
           }
         },
         err => {
           if (mounted.current === true && current === isCurrent.current)
-            dispatch({ type: 'fetch_error', payload: err });
+            dispatch({ type: 'err', p: err });
         }
       );
     }
@@ -231,14 +230,14 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
 
   React.useEffect(() => {
     const fetchOnFocus = () => {
-      dispatch({ type: 'document_focused', payload: !document.hidden });
+      dispatch({ type: 'focus', p: !document.hidden });
       if (revalidateOnDocumentFocus && !document.hidden) {
         fetchData();
       }
     };
 
     const onUnfocus = () => {
-      dispatch({ type: 'document_focused', payload: false });
+      dispatch({ type: 'focus', p: false });
     };
 
     document.addEventListener('visibilitychange', fetchOnFocus);
@@ -274,28 +273,32 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
     config.nextPageParams &&
     config.nextPageParams(state.data)
   ) {
-    fetchNextPage = async () => {
+    fetchNextPage = () => {
       isCurrent.current += 1;
       const current = isCurrent.current;
-      dispatch({ type: 'began_load', fetchingMore: true });
+      dispatch({ type: 'began', more: true });
       const nextParams: P = config.nextPageParams(state.data!); // we checked it's not null
-      try {
-        const data = await asyncFunc(...nextParams);
-
-        if (
-          state.data !== null &&
-          mounted.current === true &&
-          current === isCurrent.current
-        ) {
-          const newData = await config.extendPreviousData(data, state.data);
-          dispatch({ type: 'fetched_data', payload: newData });
-          prevData.current = newData;
-          cache._setResource(key, newData);
+      return asyncFunc(...nextParams).then(
+        data => {
+          if (
+            state.data !== null &&
+            mounted.current === true &&
+            current === isCurrent.current
+          ) {
+            Promise.resolve(config.extendPreviousData(data, state.data)).then(
+              newData => {
+                dispatch({ type: 'fetched', p: newData });
+                prevData.current = newData;
+                cache._setResource(key, newData);
+              }
+            );
+          }
+        },
+        err => {
+          if (mounted.current === true && current === isCurrent.current)
+            dispatch({ type: 'err', p: err });
         }
-      } catch (err) {
-        if (mounted.current === true && current === isCurrent.current)
-          dispatch({ type: 'fetch_error', payload: err });
-      }
+      );
     };
   }
 

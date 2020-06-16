@@ -27,21 +27,21 @@ export class Resource<T> implements Subscribable<T>, Publishable<T> {
 
   updateValue(value: T): void {
     this._currentValue = value;
-    for (const subscriber of this._subscribers.values()) {
+    Array.from(this._subscribers.values()).forEach(subscriber => {
       subscriber.updated(this._currentValue);
-    }
+    });
   }
 
   invalidateValue(): void {
-    for (const subscriber of this._subscribers.values()) {
+    Array.from(this._subscribers.values()).forEach(subscriber => {
       subscriber.invalidated();
-    }
+    });
   }
 
   announceEviction(): void {
-    for (const subscriber of this._subscribers.values()) {
+    Array.from(this._subscribers.values()).forEach(subscriber => {
       subscriber.evicted();
-    }
+    });
   }
 
   subscribe(

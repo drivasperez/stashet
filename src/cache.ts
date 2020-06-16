@@ -28,7 +28,7 @@ export class Cache {
     this._msMaxResourceAge = msMaxResourceAge;
   }
 
-  _startEvictionTimer(key: string) {
+  private _startEvictionTimer(key: string) {
     if (this._msMaxResourceAge === false) return;
     const resource = this._cache.get(key);
     if (resource !== undefined) {
@@ -68,14 +68,12 @@ export class Cache {
   ) {
     if (!this._cache.has(key)) {
       if (throwIfNotPresent)
-        throw new Error(
-          `${this.id}: Attempted to access non-existent resource: ${key}`
-        );
+        throw new Error(`${this.id}: Non-existent resource: ${key}`);
       this._addResource(key, null);
     }
 
     const val = this._cache.get(key);
-    if (!val) throw new Error(`${this.id}: Resource unaccountably absent`);
+    if (!val) throw new Error(`${this.id}: No resource`);
 
     const subscription = val.subscribe(onUpdate, onInvalidate, onEvicted);
     this._startEvictionTimer(key);
@@ -83,49 +81,27 @@ export class Cache {
   }
 
   invalidateResource(key: string | string[]) {
-    if (Array.isArray(key)) {
-      for (const k in key) {
-        const res = this._cache.get(k);
-        warning(
-          res !== undefined,
-          `Tried to invalidate non-existent resource: ${k}`
-        );
-        if (res) res.invalidateValue();
-      }
-    } else {
-      const res = this._cache.get(key);
+    const arr = Array.isArray(key) ? key : [key];
+    arr.forEach(k => {
+      const res = this._cache.get(k);
       warning(
         res !== undefined,
-        `Tried to invalidate non-existent resource: ${key}`
+        `Tried to invalidate non-existent resource: ${k}`
       );
       if (res) res.invalidateValue();
-    }
+    });
   }
 
   evictResource(key: string | string[]) {
-    if (Array.isArray(key)) {
-      for (const k in key) {
-        const res = this._cache.get(k);
-        warning(
-          res !== undefined,
-          `Tried to evict non-existent resource: ${k}`
-        );
-        if (res) {
-          res.announceEviction();
-          this._cache.delete(k);
-        }
-      }
-    } else {
-      const res = this._cache.get(key);
-      warning(
-        res !== undefined,
-        `Tried to evict non-existent resource: ${key}`
-      );
+    const arr = Array.isArray(key) ? key : [key];
+    arr.forEach(k => {
+      const res = this._cache.get(k);
+      warning(res !== undefined, `Tried to evict non-existent resource: ${k}`);
       if (res) {
         res.announceEviction();
-        this._cache.delete(key);
+        this._cache.delete(k);
       }
-    }
+    });
   }
 
   mutateResource<T = any>(
