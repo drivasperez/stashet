@@ -133,10 +133,13 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
   key: string,
   asyncFunc: (...params: P) => Promise<T>,
   initialParams: P = ([] as unknown) as P,
-  config: UseInfiniteResourceConfig<T, P>,
-  skip?: boolean
+  config: UseInfiniteResourceConfig<T, P>
 ) {
-  const { msLongLoadAlert = false, revalidateOnDocumentFocus = true } = config;
+  const {
+    skip,
+    msLongLoadAlert = false,
+    revalidateOnDocumentFocus = true,
+  } = config;
 
   type S = State<T>;
   type A = Action<T>;
@@ -153,7 +156,7 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
     return () => {
       mounted.current = false;
     };
-  });
+  }, []);
 
   const [cacheRef] = React.useState<Subscription<any>>(() =>
     cache.getResource(

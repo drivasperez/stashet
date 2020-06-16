@@ -128,10 +128,15 @@ export class Cache {
     }
   }
 
-  mutateResource(key: string, value: any, invalidateResource: boolean = true) {
+  mutateResource<T = any>(
+    key: string,
+    updateValue: (prev: null | T) => T,
+    invalidateResource: boolean = true
+  ) {
+    const prev = this._cache.get(key)?._currentValue ?? null;
+    this._setResource(key, updateValue(prev));
+
     if (invalidateResource && this._cache.has(key))
       this.invalidateResource(key);
-
-    this._setResource(key, value);
   }
 }

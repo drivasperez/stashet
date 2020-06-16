@@ -10,7 +10,7 @@ import {
 } from './types';
 
 export class Resource<T> implements Subscribable<T>, Publishable<T> {
-  private _currentValue: T;
+  _currentValue: T;
   readonly id: string;
   private _latestSubscriber = 0;
   private _subscribers: Map<number, SubscriberCallbacks<T>> = new Map();

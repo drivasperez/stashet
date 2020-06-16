@@ -37,6 +37,7 @@ export type UseResourceConfig = {
   revalidateOnDocumentFocus?: boolean;
   ignoreCacheOnMount?: boolean;
   family?: string;
+  skip?: boolean;
 };
 
 export type UseInfiniteResourceConfig<

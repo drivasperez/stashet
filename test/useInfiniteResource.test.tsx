@@ -129,13 +129,11 @@ describe('useInfiniteResource', () => {
 
     const { result } = renderHook(
       () =>
-        useInfiniteResource(
-          'blah',
-          func,
-          [],
-          { ...defaultConfig, msLongLoadAlert: 500 },
-          true
-        ),
+        useInfiniteResource('blah', func, [], {
+          ...defaultConfig,
+          msLongLoadAlert: 500,
+          skip: true,
+        }),
       { wrapper: wrapper() }
     );
 

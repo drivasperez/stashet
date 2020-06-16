@@ -120,7 +120,7 @@ describe('useResource', () => {
     );
 
     const { result } = renderHook(
-      () => useResource('blah', func, [], { msLongLoadAlert: 500 }, true),
+      () => useResource('blah', func, [], { msLongLoadAlert: 500, skip: true }),
       { wrapper: wrapper() }
     );
 
@@ -230,6 +230,63 @@ describe('useResource', () => {
     expect(result.current.isLoading).toBe(false);
     expect(result.current.data!.num).toBe(42);
     expect(result.current.data!.str).toBe('current');
+  });
+
+  it('should reflect local mutations and revalidate', async () => {
+    jest.useFakeTimers();
+    const func = jest.fn(
+      () =>
+        new Promise(res => {
+          setTimeout(() => res('Data'), 2000);
+        })
+    );
+
+    const cache = new Cache('longUpdates');
+    cache._setResource('blah', 'EXISTING DATA');
+
+    const { result, waitForNextUpdate } = renderHook(
+      () => useResource('blah', func),
+      {
+        wrapper: wrapper(cache),
+      }
+    );
+
+    expect(result.current.data).toBe('EXISTING DATA');
+    expect(result.current.isUpdating).toBe(true);
+
+    await act(async () => {
+      jest.advanceTimersByTime(2100);
+      await waitForNextUpdate();
+    });
+
+    expect(result.current.data).toBe('Data');
+    expect(result.current.isUpdating).toBe(false);
+
+    act(() => {
+      cache.mutateResource('blah', prev =>
+        prev ? 'Locally Updated ' + prev : 'cache was empty...'
+      );
+    });
+
+    // Updated properly, and invalidated.
+    expect(result.current.data).toBe('Locally Updated Data');
+    expect(result.current.isUpdating).toBe(true);
+
+    await act(async () => {
+      jest.advanceTimersByTime(2100);
+      await waitForNextUpdate();
+    });
+
+    // Revalidated, returned initial payload again.
+    expect(result.current.data).toBe('Data');
+    expect(result.current.isUpdating).toBe(false);
+
+    act(() => {
+      jest.runAllTimers();
+    });
+
+    // Evicted
+    expect(result.current.data).toBe(null);
   });
 
   it.todo('should refetch after invalidation');

@@ -65,10 +65,13 @@ const ResourceView = () => {
   const { isLoading, isLongLoad, data, isUpdating } = useResource(
     'contacts',
     fetch5s,
+    [],
     {
       msLongLoadAlert: 2000,
     }
   );
+
+  console.log('Is updating', isUpdating);
 
   if (isLoading) return <h2>Loading...</h2>;
 
@@ -95,7 +98,10 @@ const ResourceView = () => {
         />
         <button
           onClick={() =>
-            cache.mutateResource('contacts', { ...data, userName: newName })
+            cache.mutateResource('contacts', prev => ({
+              ...prev,
+              userName: newName,
+            }))
           }
         >
           Change name locally
