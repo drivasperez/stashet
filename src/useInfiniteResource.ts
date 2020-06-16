@@ -269,6 +269,8 @@ export function useInfiniteResource<T, P extends Array<any> = any[]>(
 
   if (
     state.data !== null &&
+    !state.isLoading &&
+    !state.isUpdating &&
     config.nextPageParams &&
     config.nextPageParams(state.data)
   ) {
