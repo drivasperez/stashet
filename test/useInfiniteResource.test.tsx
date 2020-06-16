@@ -14,7 +14,7 @@ const wrapper = (cache?: Cache) => ({ children }: any) => (
 const defaultConfig: UseInfiniteResourceConfig<any, any> = {
   nextPageParams: () => [],
   extendPreviousData: (newData, oldData) => ({ ...oldData, ...newData }),
-  updateLoadedData: jest.fn(),
+  updateLoadedData: currentData => Promise.resolve(jest.fn(() => currentData)),
 };
 
 describe('useInfiniteResource', () => {
@@ -103,7 +103,6 @@ describe('useInfiniteResource', () => {
 
     await act(async () => {
       jest.advanceTimersByTime(700);
-      // await waitForNextUpdate();
     });
 
     expect(result.current.isLongLoad).toBe(true);
@@ -145,7 +144,7 @@ describe('useInfiniteResource', () => {
     expect(result.current.isUpdating).toBe(false);
   });
 
-  it('should immediately render a cached value if one exists', () => {
+  it('should immediately render a cached value, update, and warn about long updates', async () => {
     jest.useFakeTimers();
     const func = jest.fn(
       () =>
@@ -154,31 +153,10 @@ describe('useInfiniteResource', () => {
         })
     );
 
-    const cache = new Cache('test-cached');
-    cache._setResource('blah', 'EXISTING DATA');
-
-    const { result } = renderHook(
-      () =>
-        useInfiniteResource('blah', func, [], {
-          ...defaultConfig,
-          msLongLoadAlert: 500,
-        }),
-      { wrapper: wrapper(cache) }
-    );
-
-    expect(result.current.data).toBe('EXISTING DATA');
-    expect(result.current.isLoading).toBe(false);
-    expect(result.current.isUpdating).toBe(true);
-  });
-
-  it('should warn about long updates', async () => {
-    jest.useFakeTimers();
-    const func = jest.fn(
-      () =>
-        new Promise(res => {
-          setTimeout(() => res('Data'), 2000);
-        })
-    );
+    const updateFn = jest.fn(async () => {
+      await new Promise(res => setTimeout(res, 2000));
+      return 'UPDATED DATA';
+    });
 
     const cache = new Cache('longUpdates');
     cache._setResource('blah', 'EXISTING DATA');
@@ -187,12 +165,14 @@ describe('useInfiniteResource', () => {
       () =>
         useInfiniteResource('blah', func, [], {
           ...defaultConfig,
+          updateLoadedData: updateFn,
           msLongLoadAlert: 500,
         }),
       { wrapper: wrapper(cache) }
     );
 
-    expect(func).toHaveBeenCalledTimes(1);
+    expect(func).toHaveBeenCalledTimes(0);
+    expect(updateFn).toHaveBeenCalledTimes(1);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.isUpdating).toBe(true);
     expect(result.current.isLongLoad).toBe(false);
@@ -201,13 +181,14 @@ describe('useInfiniteResource', () => {
 
     await act(async () => {
       jest.advanceTimersByTime(700);
-      // await waitForNextUpdate();
+      /* await waitForNextUpdate(); */
     });
 
     expect(result.current.isLongLoad).toBe(false);
     expect(result.current.isLoading).toBe(false);
     expect(result.current.isLongUpdate).toBe(true);
     expect(result.current.isUpdating).toBe(true);
+    expect(result.current.data).toBe('EXISTING DATA');
 
     await act(async () => {
       jest.runAllTimers();
@@ -218,7 +199,7 @@ describe('useInfiniteResource', () => {
     expect(result.current.isLongLoad).toBe(false);
     expect(result.current.isLongUpdate).toBe(false);
     expect(result.current.isUpdating).toBe(false);
-    expect(result.current.data).toBe('Data');
+    expect(result.current.data).toBe('UPDATED DATA');
   });
 
   it('should work with parameters', async () => {
